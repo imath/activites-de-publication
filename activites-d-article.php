@@ -90,6 +90,11 @@ final class Post_Activities {
 	 * @since 1.0.0
 	 */
 	private function inc() {
+		// This plugin requires the BuddyPress Nouveau template pack.
+		if ( ! bp_is_active( 'activity' ) || ! function_exists( 'bp_check_theme_template_pack_dependency' ) ) {
+			return;
+		}
+
 		require $this->inc_dir . 'functions.php';
 	}
 }
