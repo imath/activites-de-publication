@@ -68,7 +68,16 @@ function post_activities_min_suffix() {
 }
 
 function post_activities_init() {
-    //
+    register_meta(
+		'post',
+		'activite_d_articles',
+		array(
+			'type'        => 'boolean',
+			'description' => 'Activer ou non les activités d\'articles',
+			'single'      => true,
+			'show_in_rest'=> true,
+		)
+	);
 }
 add_action( 'bp_init', 'post_activities_init' );
 
