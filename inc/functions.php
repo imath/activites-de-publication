@@ -68,7 +68,7 @@ function post_activities_min_suffix() {
 }
 
 function post_activities_init() {
-    register_meta(
+	register_meta(
 		'post',
 		'activite_d_articles',
 		array(
@@ -82,18 +82,18 @@ function post_activities_init() {
 add_action( 'bp_init', 'post_activities_init' );
 
 function post_activities_admin_register_scripts() {
-    wp_register_script(
+	wp_register_script(
 		'activites-d-article-modern-editor',
 		sprintf( '%1$smodern-editor%2$s.js', post_activities_js_url(), post_activities_min_suffix() ),
 		array( 'wp-edit-post' ),
 		post_activities_version(),
 		true
-    );
+	);
 }
 add_action( 'admin_enqueue_scripts', 'post_activities_admin_register_scripts', 7 );
 
 function post_activities_editor_enqueue_scripts() {
-    wp_enqueue_script( 'activites-d-article-modern-editor' );
+	wp_enqueue_script( 'activites-d-article-modern-editor' );
 }
 add_action( 'enqueue_block_editor_assets', 'post_activities_editor_enqueue_scripts' );
 
@@ -104,7 +104,7 @@ function post_activities_front_register_scripts() {
 		foreach ( array(
 			'bp-nouveau'                    => bp_core_get_js_dependencies(),
 			'bp-nouveau-activity'           => array( 'bp-nouveau' ),
-			'bp-nouveau-activity-post-form' => array ( 'bp-nouveau', 'bp-nouveau-activity', 'json2', 'wp-backbone' ) ) as $handle => $deps ) {
+			'bp-nouveau-activity-post-form' => array( 'bp-nouveau', 'bp-nouveau-activity', 'json2', 'wp-backbone' ) ) as $handle => $deps ) {
 			$filename = 'buddypress-nouveau';
 
 			if ( 'bp-nouveau' !== $handle ) {
