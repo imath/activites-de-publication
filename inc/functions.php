@@ -67,17 +67,41 @@ function post_activities_min_suffix() {
 	return apply_filters( 'post_activities_min_suffix', $min );
 }
 
-function post_activities_init() {
-	register_meta(
+function post_activities_supported_post_types() {
+	return apply_filters( 'post_activities_supported_post_types', array(
 		'post',
-		'activite_d_articles',
-		array(
-			'type'        => 'boolean',
-			'description' => 'Activer ou non les activités d\'articles',
-			'single'      => true,
-			'show_in_rest'=> true,
-		)
+		'page',
+	) );
+}
+
+function post_activities_is_post_type_supported( WP_Post $post ) {
+	$retval = false;
+	$type   = get_post_type( $post );
+
+	if ( in_array( $type, post_activities_supported_post_types(), true ) ) {
+		$retval = true;
+	}
+
+	if ( 'page' === $type && in_array( $post->ID, bp_core_get_directory_page_ids(), true ) ) {
+		$retval = false;
+	}
+
+	return $retval;
+}
+
+function post_activities_init() {
+	$supported_post_types = post_activities_supported_post_types();
+
+	$common_args = array(
+		'type'        => 'boolean',
+		'description' => __( 'Activer ou non les activités d\'articles', 'activite-d-articles' ),
+		'single'      => true,
+		'show_in_rest'=> true,
 	);
+
+	foreach ( $supported_post_types as $post_type ) {
+		register_post_meta( $post_type, 'activite_d_articles', $common_args );
+	}
 }
 add_action( 'bp_init', 'post_activities_init' );
 
@@ -93,6 +117,12 @@ function post_activities_admin_register_scripts() {
 add_action( 'admin_enqueue_scripts', 'post_activities_admin_register_scripts', 7 );
 
 function post_activities_editor_enqueue_scripts() {
+	$post = get_post();
+
+	if ( ! post_activities_is_post_type_supported( $post ) ) {
+		return;
+	}
+
 	wp_enqueue_script( 'activites-d-article-modern-editor' );
 }
 add_action( 'enqueue_block_editor_assets', 'post_activities_editor_enqueue_scripts' );
@@ -132,7 +162,13 @@ function post_activities_front_register_scripts() {
 add_action( 'bp_enqueue_scripts', 'post_activities_front_register_scripts', 4 );
 
 function post_activities_front_enqueue_scripts() {
-	if ( ! is_single() || true !== (bool) get_post_meta( get_the_ID(), 'activite_d_articles', true ) ) {
+	if ( ! is_singular() ) {
+		return;
+	}
+
+	$post = get_post();
+
+	if ( ! post_activities_is_post_type_supported( $post ) || true !== (bool) get_post_meta( $post->ID, 'activite_d_articles', true ) ) {
 		return;
 	}
 

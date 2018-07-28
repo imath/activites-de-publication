@@ -4,7 +4,7 @@
  * Plugin URI: https://imathi.eu/tag/activites-d-article/
  * Description: Utilisez les activités de BuddyPress pour dynamiser les conversations dans vos articles WordPress.
  * Version: 1.0.0
- * Requires at least: 4.9
+ * Requires at least: 4.9.8
  * Tested up to: 5.0
  * License: GPLv2 or later
  * Author: imath
@@ -90,8 +90,9 @@ final class Post_Activities {
 	 * @since 1.0.0
 	 */
 	private function inc() {
-		// This plugin requires the BuddyPress Nouveau template pack.
-		if ( ! bp_is_active( 'activity' ) || ! function_exists( 'bp_check_theme_template_pack_dependency' ) ) {
+		// This plugin requires WordPress 4.9.8 & the BuddyPress Nouveau template pack.
+		if ( ! bp_is_active( 'activity' ) || ! function_exists( 'register_post_meta' ) || ! function_exists( 'bp_check_theme_template_pack_dependency' ) ) {
+			_doing_it_wrong( 'post_activities()', __( 'Cette extension nécessite à minima WordPress 4.9.8, BuddyPress 3.0 et requiert que le composant des activités soit actif.', 'activites-d-article' ), '1.0.0' );
 			return;
 		}
 
