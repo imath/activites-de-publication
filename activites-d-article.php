@@ -82,6 +82,9 @@ final class Post_Activities {
 		$this->inc_dir    = trailingslashit( $this->dir . 'inc' );
 		$this->js_url     = trailingslashit( $this->url . 'js' );
 		$this->assets_url = trailingslashit( $this->url . 'assets' );
+
+		// BP Rest
+		$this->bp_rest_is_enabled = class_exists( 'BP_REST_Activity_Endpoint', false );
 	}
 
 	/**
@@ -96,11 +99,32 @@ final class Post_Activities {
 			return;
 		}
 
+		spl_autoload_register( array( $this, 'autoload' ) );
+
 		require $this->inc_dir . 'functions.php';
 
 		if ( is_admin() ) {
 			require $this->inc_dir . 'admin.php';
 		}
+	}
+
+	/**
+	 * Class Autoload function
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  string $class The class name.
+	 */
+	public function autoload( $class ) {
+		$name = str_replace( '_', '-', strtolower( $class ) );
+		$path = $this->inc_dir . "classes/class-{$name}.php";
+
+		// Sanity check.
+		if ( ! file_exists( $path ) || ( $this->bp_rest_is_enabled && 'BP_REST_Activity_Endpoint' === $class ) ) {
+			return;
+		}
+
+		require $path;
 	}
 }
 

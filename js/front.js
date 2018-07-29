@@ -2,7 +2,11 @@
  * Custom Sidebar
  */
 
-( function( $, bp ) {
+( function( $, bp, wp ) {
+
+	if ( 'undefined' === typeof _activitesDePublicationSettings ) {
+		return;
+	}
 
     $( '#comments' ).append( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
 
@@ -49,4 +53,21 @@
 
     bp.Nouveau.Activity.postForm.start();
 
-} )( jQuery, window.bp || {} );
+    // @todo Backbone model/collection and views to list Post activities.
+    wp.apiRequest( {
+		path: _activitesDePublicationSettings.versionString + '/activity/',
+		type: 'GET',
+		data: {
+			type : 'publication_activity',
+			'primary_id' : _activitesDePublicationSettings.primaryID,
+			'secondary_id' : _activitesDePublicationSettings.secondaryID,
+		},
+		dataType: 'json'
+	} ).done( function( response ) {
+		console.log( response );
+
+	} ).fail( function( response ) {
+		console.log( response );
+	} );
+
+} )( jQuery, window.bp || {}, window.wp || {} );
