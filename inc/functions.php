@@ -179,9 +179,17 @@ function post_activities_front_enqueue_scripts() {
 
 	wp_enqueue_script( 'activites-d-article-front-script' );
 	wp_localize_script( 'activites-d-article-front-script', '_activitesDePublicationSettings', array(
-		'versionString' => 'buddypress/v1',
-		'primaryID'     => get_current_blog_id(),
-		'secondaryID'   => $post->ID,
+		'versionString'     => 'buddypress/v1',
+		'primaryID'         => get_current_blog_id(),
+		'secondaryID'       => $post->ID,
+		// Use the comment_form() fields to be as close to the theme output as possible.
+		'commentFormFields' => apply_filters( 'comment_form_defaults', array(
+			'must_log_in' => '<p class="must-log-in">' . sprintf(
+			/* translators: %s: login URL */
+									__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des activités.', 'activite-d-articles' ),
+			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
+		) . '</p>',
+		) ),
 	) );
 
 	wp_localize_script( 'bp-nouveau', 'BP_Nouveau', array(

@@ -8,27 +8,32 @@
 		return;
 	}
 
-    $( '#comments' ).append( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
+	var postForm = bp.Views.PostForm, postContainer = $( '#tmpl-activity-post-form-buttons' ).parent();
 
-    var postForm = bp.Views.PostForm;
+	if ( $( '#comments' ).length ) {
+		$( '#comments' ).before( $( '<div></div>' ).prop( 'id', 'activites-d-articles-nav' ) );
+		$( '#activites-d-articles-nav' ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
+	} else {
+		$( postContainer ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
+	}
 
-    /**
-     * Activity Post Form overrides.
-     */
-    bp.Views.PostForm = postForm.extend( {
-        postUpdate: function( event ) {
-            if ( event ) {
+	/**
+	 * Activity Post Form overrides.
+	 */
+	bp.Views.PostForm = postForm.extend( {
+		postUpdate: function( event ) {
+			if ( event ) {
 				if ( 'keydown' === event.type && ( 13 !== event.keyCode || ! event.ctrlKey ) ) {
 					return event;
 				}
 
 				event.preventDefault();
-            }
+			}
 
-            var self = this,
-                meta = {};
+			var self = this,
+			    meta = {};
 
-            // Set the content and meta
+			// Set the content and meta
 			_.each( this.$el.serializeArray(), function( pair ) {
 				pair.name = pair.name.replace( '[]', '' );
 				if ( 'whats-new' === pair.name ) {
@@ -48,13 +53,11 @@
 
 			// Silently add meta
 			this.model.set( meta, { silent: true } );
-        }
-    } );
+		}
+	} );
 
-    bp.Nouveau.Activity.postForm.start();
-
-    // @todo Backbone model/collection and views to list Post activities.
-    wp.apiRequest( {
+	// @todo Backbone model/collection and views to list Post activities.
+	wp.apiRequest( {
 		path: _activitesDePublicationSettings.versionString + '/activity/',
 		type: 'GET',
 		data: {
@@ -64,10 +67,13 @@
 		},
 		dataType: 'json'
 	} ).done( function( response ) {
-		console.log( response );
+		bp.Nouveau.Activity.postForm.start();
 
 	} ).fail( function( response ) {
-		console.log( response );
+
+		if ( response.responseJSON && 'rest_authorization_required' === response.responseJSON.code ) {
+			$( '#bp-nouveau-activity-form' ).html( _activitesDePublicationSettings.commentFormFields.must_log_in );
+		}
 	} );
 
 } )( jQuery, window.bp || {}, window.wp || {} );
