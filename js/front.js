@@ -2,7 +2,7 @@
  * Custom Sidebar
  */
 
-( function( $, bp, wp ) {
+( function( $, _, bp, wp ) {
 
 	if ( 'undefined' === typeof _activitesDePublicationSettings ) {
 		return;
@@ -16,6 +16,28 @@
 	} else {
 		$( postContainer ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
 	}
+
+	var activityModel = bp.Models.Activity.extend( {
+		saveActivity: function() {
+			var activityData = _.extend( this.attributes, {
+				type : 'publication_activity',
+				'item_id' : _activitesDePublicationSettings.primaryID,
+				'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
+			} );
+
+			wp.apiRequest( {
+				path: _activitesDePublicationSettings.versionString + '/activity/',
+				type: 'POST',
+				data: activityData,
+				dataType: 'json'
+			} ).done( function( response ) {
+				console.log( response );
+
+			} ).fail( function( response ) {
+				console.log( response );
+			} );
+		}
+	} );
 
 	/**
 	 * Activity Post Form overrides.
@@ -53,6 +75,8 @@
 
 			// Silently add meta
 			this.model.set( meta, { silent: true } );
+			var activite = new activityModel( this.model.attributes );
+			activite.saveActivity();
 		}
 	} );
 
@@ -76,4 +100,4 @@
 		}
 	} );
 
-} )( jQuery, window.bp || {}, window.wp || {} );
+} )( jQuery, _, window.bp || {}, window.wp || {} );

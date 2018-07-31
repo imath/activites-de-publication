@@ -115,6 +115,12 @@ function post_activities_rest_init() {
 }
 add_action( 'bp_rest_api_init', 'post_activities_rest_init' );
 
+function post_activities_format_activity_action( $action, $activity ) {
+	$user_link = bp_core_get_userlink( $activity->user_id );
+
+	return sprintf( __( '%s a partagé une activité de publication.', 'activite-d-articles' ), $user_link );
+}
+
 /**
  * Register activity action.
  *
@@ -125,12 +131,32 @@ function post_activities_register_activity_type() {
 		buddypress()->activity->id,
 		'publication_activity',
 		__( 'Nouvelle activité d\'article', 'activite-d-articles' ),
-		'bp_blogs_format_activity_action_new_blog',
+		'post_activities_format_activity_action',
 		__( 'Activités d\'article', 'activite-d-articles' ),
 		array( 'activity', 'member' )
 	);
 }
 add_action( 'bp_register_activity_actions', 'post_activities_register_activity_type' );
+
+function post_activities_new_activity_args( $args = array() ) {
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		if ( ! isset( $_POST['type'] ) || 'publication_activity' !== $_POST['type'] ) {
+			return $args;
+		}
+
+		$postData = wp_parse_args( $_POST, array(
+			'item_id'           => 0,
+			'secondary_item_id' => 0,
+		) );
+
+		$args = array_merge( $args, $postData, array(
+			'primary_link' => get_permalink( (int) $postData['item_id'] ),
+		) );
+	}
+
+	return $args;
+}
+add_filter( 'bp_after_activity_add_parse_args', 'post_activities_new_activity_args', 10, 1 );
 
 function post_activities_front_register_scripts() {
 	if ( ! isset( wp_scripts()->registered['bp-nouveau-activity-post-form'] ) ) {
