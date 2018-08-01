@@ -274,6 +274,11 @@ function post_activities_js_templates( $content = '' ) {
 
 	ob_start();
 	require_once( $path . 'buddypress/common/js-templates/activity/form.php' );
+	?>
+	<script type="text/html" id="tmpl-activite-d-article">
+		<p>{{{data.content}}}</p>
+	</script>
+	<?php
 	$templates = ob_get_clean();
 
 	remove_filter( 'the_content', 'post_activities_js_templates' );

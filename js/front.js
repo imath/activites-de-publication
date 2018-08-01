@@ -10,12 +10,18 @@
 
 	var postForm = bp.Views.PostForm, postContainer = $( '#tmpl-activity-post-form-buttons' ).parent();
 
+	// Container for the Nav and Activity post form (comments allowed).
 	if ( $( '#comments' ).length ) {
-		$( '#comments' ).before( $( '<div></div>' ).prop( 'id', 'activites-d-articles-nav' ) );
-		$( '#activites-d-articles-nav' ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
+		$( '#comments' ).before( $( '<div></div>' ).prop( 'id', 'activite-d-articles-nav' ) );
+		$( '#activite-d-articles-nav' ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
+
+	// Container for the Activity post form (comments not allowed).
 	} else {
 		$( postContainer ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
 	}
+
+	// Container for the list of Activities for this Post.
+	$( '#bp-nouveau-activity-form' ).after( $( '<div></div>' ).prop( 'id', 'activite-d-articles-list' ) );
 
 	/**
 	 * Activity Post Form overrides.
@@ -76,6 +82,37 @@
 		}
 	} );
 
+	bp.Models.activite = Backbone.Model.extend( {
+		defaults: {
+			id      : 0,
+			user    : 0,
+			content : '',
+			type    : ''
+		},
+	} );
+
+	bp.Collections.activites = Backbone.Collection.extend( {
+		model: bp.Models.activite
+	} );
+
+	bp.Views.Activites = bp.View.extend( {
+		tagName  : 'ul',
+		id       : 'activites-liste',
+
+		initialize: function() {
+			this.collection.on( 'add', this.addActiviteView, this );
+		},
+
+		addActiviteView: function( activite ) {
+			this.views.add( new bp.Views.Activite( { model: activite } ) );
+		}
+	} );
+
+	bp.Views.Activite = bp.View.extend( {
+		tagName  : 'li',
+		template: bp.template( 'activite-d-article' )
+	} );
+
 	// @todo Backbone model/collection and views to list Post activities.
 	wp.apiRequest( {
 		path: _activitesDePublicationSettings.versionString + '/activity/',
@@ -88,6 +125,17 @@
 		dataType: 'json'
 	} ).done( function( response ) {
 		bp.Nouveau.Activity.postForm.start();
+
+		var activites = new bp.Collections.activites(),
+		    activitesView = new bp.Views.Activites( { collection: activites } );
+
+		activitesView.inject( '#activite-d-articles-list' );
+
+		if ( _.isArray( response ) && response.length > 0 ) {
+			_.each( response, function( model ) {
+				activites.add( model );
+			} );
+		}
 
 	} ).fail( function( response ) {
 
