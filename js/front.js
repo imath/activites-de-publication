@@ -17,28 +17,6 @@
 		$( postContainer ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
 	}
 
-	var activityModel = bp.Models.Activity.extend( {
-		saveActivity: function() {
-			var activityData = _.extend( this.attributes, {
-				type : 'publication_activity',
-				'item_id' : _activitesDePublicationSettings.primaryID,
-				'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
-			} );
-
-			wp.apiRequest( {
-				path: _activitesDePublicationSettings.versionString + '/activity/',
-				type: 'POST',
-				data: activityData,
-				dataType: 'json'
-			} ).done( function( response ) {
-				console.log( response );
-
-			} ).fail( function( response ) {
-				console.log( response );
-			} );
-		}
-	} );
-
 	/**
 	 * Activity Post Form overrides.
 	 */
@@ -75,8 +53,26 @@
 
 			// Silently add meta
 			this.model.set( meta, { silent: true } );
-			var activite = new activityModel( this.model.attributes );
-			activite.saveActivity();
+
+			// @todo this should be in the model.
+			wp.apiRequest( {
+				path: _activitesDePublicationSettings.versionString + '/activity/',
+				type: 'POST',
+				data: _.extend( self.model.attributes, {
+					type : 'publication_activity',
+					'item_id' : _activitesDePublicationSettings.primaryID,
+					'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
+				} ),
+				dataType: 'json'
+			} ).done( function( response ) {
+				// @todo Get the first activity and add it to the collection.
+
+				// Reset the form
+				self.resetForm();
+
+			} ).fail( function( response ) {
+				self.model.set( 'errors', { type: 'error', value: response.responseJSON.message } );
+			} );
 		}
 	} );
 
