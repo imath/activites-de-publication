@@ -212,22 +212,44 @@ function post_activities_front_enqueue_scripts() {
 		'commentFormFields' => apply_filters( 'comment_form_defaults', array(
 			'must_log_in' => '<p class="must-log-in">' . sprintf(
 			/* translators: %s: login URL */
-									__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des activités.', 'activite-d-articles' ),
+			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des activités.', 'activite-d-articles' ),
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
 		) . '</p>',
 		) ),
 	) );
 
+	$activity_params = array(
+		'user_id'     => bp_loggedin_user_id(),
+		'object'      => 'user',
+		'backcompat'  => false,
+		'post_nonce'  => wp_create_nonce( 'post_update', '_wpnonce_post_update' ),
+	);
+
+	if ( is_user_logged_in() && buddypress()->avatar->show_avatars ) {
+		$width  = bp_core_avatar_thumb_width();
+		$height = bp_core_avatar_thumb_height();
+		$activity_params = array_merge( $activity_params, array(
+			'avatar_url'    => bp_get_loggedin_user_avatar( array(
+				'width'  => $width,
+				'height' => $height,
+				'html'   => false,
+			) ),
+			'avatar_width'  => $width,
+			'avatar_height' => $height,
+			'user_domain'   => bp_loggedin_user_domain(),
+			'avatar_alt'    => sprintf(
+				/* translators: %s = member name */
+				__( 'Profile photo of %s', 'buddypress' ),
+				bp_get_loggedin_user_fullname()
+			),
+		) );
+	}
+
 	wp_localize_script( 'bp-nouveau', 'BP_Nouveau', array(
 		'objects' => array( 'activity' ),
 		'nonces'  => array( 'activity' => wp_create_nonce( 'bp_nouveau_activity' ) ),
 		'activity' => array(
-			'params' => array(
-				'user_id'     => bp_loggedin_user_id(),
-				'object'      => 'user',
-				'backcompat'  => false,
-				'post_nonce'  => wp_create_nonce( 'post_update', '_wpnonce_post_update' ),
-			),
+			'params' => $activity_params,
 			'strings' => array(
 				'whatsnewPlaceholder' => sprintf( __( "What's new, %s?", 'buddypress' ), bp_get_user_firstname( bp_get_loggedin_user_fullname() ) ),
 				'whatsnewLabel'       => __( 'Post what\'s new', 'buddypress' ),
