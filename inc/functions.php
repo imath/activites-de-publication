@@ -163,8 +163,8 @@ add_filter( 'bp_after_activity_add_parse_args', 'post_activities_new_activity_ar
  *
  * @since 1.0.0
  *
- * @param WP_REST_Response $response The BP Rest response.
- * @param WP_REST_Response           The "rendered" BP Rest response.
+ * @param  WP_REST_Response $response The BP Rest response.
+ * @return WP_REST_Response           The "rendered" BP Rest response.
  */
 function post_activities_prepare_buddypress_activity_value( WP_REST_Response $response ) {
 	if ( isset( $response->data['content'] ) ) {
