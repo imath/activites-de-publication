@@ -150,7 +150,7 @@ function post_activities_new_activity_args( $args = array() ) {
 		) );
 
 		$args = array_merge( $args, $postData, array(
-			'primary_link' => get_permalink( (int) $postData['item_id'] ),
+			'primary_link' => get_permalink( (int) $postData['secondary_item_id'] ),
 		) );
 	}
 
@@ -471,3 +471,12 @@ function post_activities_can_favorite( $can_favorite = true, $activity = null ) 
 	return $can_favorite;
 }
 add_filter( 'bp_activity_can_favorite', 'post_activities_can_favorite', 20, 1 );
+
+function post_activities_get_activity_permalink( $link = '', &$activity = null ) {
+	if ( isset( $activity->type ) && 'publication_activity' === $activity->type ) {
+		$link = $activity->primary_link;
+	}
+
+	return $link;
+}
+add_filter( 'bp_activity_get_permalink', 'post_activities_get_activity_permalink', 10, 2 );
