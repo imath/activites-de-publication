@@ -71,7 +71,11 @@
 				} ),
 				dataType: 'json'
 			} ).done( function( response ) {
-				// @todo Get the first activity and add it to the collection.
+				// Get the first activity and add it to the collection.
+				if ( _.isArray( response ) && response.length > 0 ) {
+					var published = _.extend( _.first( response ), { at: 0} );
+					bp.ActivitesDePublications.activites.add( published );
+				}
 
 				// Reset the form
 				self.resetForm();
@@ -104,7 +108,14 @@
 		},
 
 		addActiviteView: function( activite ) {
-			this.views.add( new bp.Views.Activite( { model: activite } ) );
+			var options = {};
+
+			if ( ! _.isUndefined( activite.get( 'at' ) ) ) {
+				options.at = activite.get( 'at' );
+				activite.unset( 'at', { silent: true } );
+			}
+
+			this.views.add( new bp.Views.Activite( { model: activite } ), options );
 		}
 	} );
 
@@ -126,14 +137,18 @@
 	} ).done( function( response ) {
 		bp.Nouveau.Activity.postForm.start();
 
-		var activites = new bp.Collections.activites(),
-		    activitesView = new bp.Views.Activites( { collection: activites } );
+		// Globalize the Collection.
+		bp.ActivitesDePublications = {
+			activites: new bp.Collections.activites(),
+		}
+
+		var activitesView = new bp.Views.Activites( { collection: bp.ActivitesDePublications.activites } );
 
 		activitesView.inject( '#activites-de-publication-list' );
 
 		if ( _.isArray( response ) && response.length > 0 ) {
 			_.each( response, function( model ) {
-				activites.add( model );
+				bp.ActivitesDePublications.activites.add( model );
 			} );
 		}
 
