@@ -94,7 +94,7 @@ function post_activities_init() {
 
 	$common_args = array(
 		'type'        => 'boolean',
-		'description' => __( 'Activer ou non les activités d\'articles', 'activite-d-articles' ),
+		'description' => __( 'Activer ou non les activités d\'articles', 'activites-d-article' ),
 		'single'      => true,
 		'show_in_rest'=> true,
 	);
@@ -118,7 +118,7 @@ add_action( 'bp_rest_api_init', 'post_activities_rest_init' );
 function post_activities_format_activity_action( $action, $activity ) {
 	$user_link = bp_core_get_userlink( $activity->user_id );
 
-	return sprintf( __( '%s a partagé une activité de publication.', 'activite-d-articles' ), $user_link );
+	return sprintf( __( '%s a partagé une activité de publication.', 'activites-d-article' ), $user_link );
 }
 
 /**
@@ -130,9 +130,9 @@ function post_activities_register_activity_type() {
 	bp_activity_set_action(
 		buddypress()->activity->id,
 		'publication_activity',
-		__( 'Nouvelle activité d\'article', 'activite-d-articles' ),
+		__( 'Nouvelle activité d\'article', 'activites-d-article' ),
 		'post_activities_format_activity_action',
-		__( 'Activités d\'article', 'activite-d-articles' ),
+		__( 'Activités d\'article', 'activites-d-article' ),
 		array( 'activity', 'member' )
 	);
 }
@@ -173,6 +173,26 @@ function post_activities_prepare_buddypress_activity_value( WP_REST_Response $re
 		$response->data['content'] = apply_filters( 'bp_get_activity_content_body', $response->data['content'] );
 
 		remove_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
+
+		// Add needed data for the user.
+		$response->data['user_name'] = bp_core_get_user_displayname( $response->data['user'] );
+		$response->data['user_link'] = apply_filters( 'bp_get_activity_user_link', bp_core_get_user_domain( $response->data['user'] ) );
+
+		// Add needed meta data
+		$timestamp = strtotime( $response->data['date'] );
+		$response->data['human_date'] = sprintf(
+			__( '%1$s à %2$s', 'activites-d-article' ),
+			date_i18n( get_option( 'date_format' ), $timestamp ),
+			date_i18n( get_option( 'time_format' ), $timestamp )
+		);
+
+		if ( current_user_can( 'bp_moderate' ) ) {
+			$response->data['edit_link'] = esc_url_raw( add_query_arg( array(
+				'page'   => 'bp-activity',
+				'aid'    => $response->data['id'],
+				'action' => 'edit',
+			), bp_get_admin_url( 'admin.php' ) ) );
+		}
 	}
 
 	return $response;
@@ -233,7 +253,7 @@ function post_activities_front_enqueue_scripts() {
 		'commentFormFields' => apply_filters( 'comment_form_defaults', array(
 			'must_log_in' => '<p class="must-log-in">' . sprintf(
 			/* translators: %s: login URL */
-			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des activités.', 'activite-d-articles' ),
+			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des activités.', 'activites-d-article' ),
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
 		) . '</p>',
 		) ),
@@ -297,7 +317,27 @@ function post_activities_js_templates( $content = '' ) {
 	require_once( $path . 'buddypress/common/js-templates/activity/form.php' );
 	?>
 	<script type="text/html" id="tmpl-activites-de-publication">
-		<p>{{{data.content}}}</p>
+		<article class="comment-body">
+			<footer class="comment-meta">
+				<div class="comment-author vcard">
+					<img alt="" src="{{data.user_avatar.full}}" class="avatar avatar-100 photo" height="100" width="100">
+					<b class="fn"><a href="{{data.user_link}}" rel="nofollow" class="url">{{data.user_name}}</a></b>
+				</div>
+				<div class="comment-metadata">
+					<a href="{{data.link}}">
+						<time datetime="{{data.date}}">{{{data.human_date}}}</time>
+					</a>
+					<# if ( data.edit_link ) { #>
+						<span class="edit-link">
+							<a class="comment-edit-link" href="{{data.edit_link}}"><?php esc_html_e( 'Modifier', 'activites-d-article' ); ?></a>
+						</span>
+					<# } #>
+				</div>
+			</footer>
+			<div class="comment-content">
+				{{{data.content}}}
+			</div>
+		</article>
 	</script>
 	<?php
 	$templates = ob_get_clean();

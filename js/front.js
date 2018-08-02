@@ -100,8 +100,9 @@
 	} );
 
 	bp.Views.Activites = bp.View.extend( {
-		tagName  : 'ul',
+		tagName  : 'ol',
 		id       : 'activites-liste',
+		className: 'comment-list',
 
 		initialize: function() {
 			this.collection.on( 'add', this.addActiviteView, this );
@@ -121,7 +122,8 @@
 
 	bp.Views.Activite = bp.View.extend( {
 		tagName  : 'li',
-		template: bp.template( 'activites-de-publication' )
+		template : bp.template( 'activites-de-publication' ),
+		className: 'comment depth-1'
 	} );
 
 	// @todo Backbone model/collection and views to list Post activities.
