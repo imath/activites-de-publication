@@ -406,6 +406,22 @@ function post_activities_can_comment( $can_comment = false, $type = '' ) {
 }
 add_filter( 'bp_activity_can_comment', 'post_activities_can_comment', 10, 2 );
 
+function post_activities_get_delete_activity_url() {
+	global $activities_template;
+
+	if ( ! isset( $activities_template->activity ) ) {
+		return '';
+	}
+
+	$delete_url = bp_get_activity_delete_url();
+
+	if ( bp_is_activity_component() && is_numeric( bp_current_action() ) ) {
+		$delete_url = str_replace( '&amp;', '&#038;', $delete_url );
+	}
+
+	return $delete_url;
+}
+
 function post_activities_moderate_link( $delete_link = '', $activity = null ) {
 	if ( 'nouveau' === bp_get_theme_compat_id() ) {
 		return $delete_link;
@@ -419,7 +435,7 @@ function post_activities_moderate_link( $delete_link = '', $activity = null ) {
 	}
 
 	return str_replace( array(
-		bp_get_activity_delete_url(),
+		post_activities_get_delete_activity_url(),
 		__( 'Delete', 'buddypress' ),
 		' confirm',
 		'delete-activity'
@@ -441,7 +457,7 @@ function post_activities_get_nouveau_activity_entry_buttons( &$buttons = array()
 
 	if ( ! empty( $buttons['activity_delete'] ) && $id ) {
 		$buttons['activity_delete'] = str_replace( array(
-			bp_get_activity_delete_url(),
+			post_activities_get_delete_activity_url(),
 			' confirm',
 			'delete-activity',
 			'<span class="bp-screen-reader-text"></span>'
@@ -473,7 +489,7 @@ function post_activities_can_favorite( $can_favorite = true, $activity = null ) 
 add_filter( 'bp_activity_can_favorite', 'post_activities_can_favorite', 20, 1 );
 
 function post_activities_get_activity_permalink( $link = '', &$activity = null ) {
-	if ( isset( $activity->type ) && 'publication_activity' === $activity->type ) {
+	if ( isset( $activity->type ) && 'publication_activity' === $activity->type && is_buddypress() ) {
 		$link = $activity->primary_link;
 	}
 
