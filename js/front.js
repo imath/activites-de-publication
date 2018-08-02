@@ -12,8 +12,8 @@
 
 	// Container for the Nav and Activity post form (comments allowed).
 	if ( $( '#comments' ).length ) {
-		$( '#comments' ).before( $( '<div></div>' ).prop( 'id', 'activite-d-articles-nav' ) );
-		$( '#activite-d-articles-nav' ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
+		$( '#comments' ).before( $( '<div></div>' ).prop( 'id', 'activites-de-publication-nav' ) );
+		$( '#activites-de-publication-nav' ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
 
 	// Container for the Activity post form (comments not allowed).
 	} else {
@@ -21,7 +21,7 @@
 	}
 
 	// Container for the list of Activities for this Post.
-	$( '#bp-nouveau-activity-form' ).after( $( '<div></div>' ).prop( 'id', 'activite-d-articles-list' ) );
+	$( '#bp-nouveau-activity-form' ).after( $( '<div></div>' ).prop( 'id', 'activites-de-publication-list' ) );
 
 	/**
 	 * Activity Post Form overrides.
@@ -110,7 +110,7 @@
 
 	bp.Views.Activite = bp.View.extend( {
 		tagName  : 'li',
-		template: bp.template( 'activite-d-article' )
+		template: bp.template( 'activites-de-publication' )
 	} );
 
 	// @todo Backbone model/collection and views to list Post activities.
@@ -129,7 +129,7 @@
 		var activites = new bp.Collections.activites(),
 		    activitesView = new bp.Views.Activites( { collection: activites } );
 
-		activitesView.inject( '#activite-d-articles-list' );
+		activitesView.inject( '#activites-de-publication-list' );
 
 		if ( _.isArray( response ) && response.length > 0 ) {
 			_.each( response, function( model ) {

@@ -275,7 +275,7 @@ function post_activities_js_templates( $content = '' ) {
 	ob_start();
 	require_once( $path . 'buddypress/common/js-templates/activity/form.php' );
 	?>
-	<script type="text/html" id="tmpl-activite-d-article">
+	<script type="text/html" id="tmpl-activites-de-publication">
 		<p>{{{data.content}}}</p>
 	</script>
 	<?php
