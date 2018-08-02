@@ -158,6 +158,18 @@ function post_activities_new_activity_args( $args = array() ) {
 }
 add_filter( 'bp_after_activity_add_parse_args', 'post_activities_new_activity_args', 10, 1 );
 
+function post_activities_get_activity_edit_link( $id = 0 ) {
+	if ( ! $id ) {
+		return '';
+	}
+
+	return add_query_arg( array(
+		'page'   => 'bp-activity',
+		'aid'    => $id,
+		'action' => 'edit',
+	), bp_get_admin_url( 'admin.php' ) );
+}
+
 /**
  * The BP Rest Activity Controller only returns raw values, we need to render the content.
  *
@@ -186,12 +198,8 @@ function post_activities_prepare_buddypress_activity_value( WP_REST_Response $re
 			date_i18n( get_option( 'time_format' ), $timestamp )
 		);
 
-		if ( current_user_can( 'bp_moderate' ) ) {
-			$response->data['edit_link'] = esc_url_raw( add_query_arg( array(
-				'page'   => 'bp-activity',
-				'aid'    => $response->data['id'],
-				'action' => 'edit',
-			), bp_get_admin_url( 'admin.php' ) ) );
+		if ( bp_current_user_can( 'bp_moderate' ) ) {
+			$response->data['edit_link'] = esc_url_raw( post_activities_get_activity_edit_link( $response->data['id'] ) );
 		}
 	}
 
@@ -345,3 +353,121 @@ function post_activities_js_templates( $content = '' ) {
 	remove_filter( 'the_content', 'post_activities_js_templates' );
 	return $content . $templates;
 }
+
+function post_activities_get_activity_id( $activity = null ) {
+	$id = '';
+
+	if ( empty( $activity->id ) ) {
+		global $activities_template;
+
+		if ( isset( $activities_template->activity->id ) ) {
+			$id = $activities_template->activity->id;
+		}
+	} else {
+		$id = $activity->id;
+	}
+
+	return (int) $id;
+}
+
+function post_activities_get_activity_type( $activity = null ) {
+	$type = '';
+
+	if ( empty( $activity->type ) ) {
+		global $activities_template;
+
+		if ( isset( $activities_template->activity->type ) ) {
+			$type = $activities_template->activity->type;
+		}
+	} else {
+		$type = $activity->type;
+	}
+
+	return $type;
+}
+
+function post_activities_can_delete( $can_delete = false, $activity = null ) {
+	$type = post_activities_get_activity_type( $activity );
+
+	if ( 'publication_activity' === $type ) {
+		$can_delete = bp_current_user_can( 'bp_moderate' );
+	}
+
+	return $can_delete;
+}
+add_filter( 'bp_activity_user_can_delete', 'post_activities_can_delete', 20, 2 );
+
+function post_activities_can_comment( $can_comment = false, $type = '' ) {
+	if ( 'publication_activity' === $type ) {
+		$can_comment = false;
+	}
+
+	return $can_comment;
+}
+add_filter( 'bp_activity_can_comment', 'post_activities_can_comment', 10, 2 );
+
+function post_activities_moderate_link( $delete_link = '', $activity = null ) {
+	if ( 'nouveau' === bp_get_theme_compat_id() ) {
+		return $delete_link;
+	}
+
+	$id   = post_activities_get_activity_id( $activity );
+	$type = post_activities_get_activity_type( $activity );
+
+	if ( 'publication_activity' !== $type || ! $id ) {
+		return $delete_link;
+	}
+
+	return str_replace( array(
+		bp_get_activity_delete_url(),
+		__( 'Delete', 'buddypress' ),
+		' confirm',
+		'delete-activity'
+	), array(
+		esc_url( post_activities_get_activity_edit_link( $id ) ),
+		__( 'Modifier', 'activites-d-article' ),
+		'',
+		'edit-activity',
+	), $delete_link );
+}
+add_filter( 'bp_get_activity_delete_link', 'post_activities_moderate_link', 10, 1 );
+
+function post_activities_get_nouveau_activity_entry_buttons( &$buttons = array(), $id = 0 ) {
+	if ( 'publication_activity' !== bp_get_activity_type() ) {
+		return $buttons;
+	}
+
+	unset( $buttons['activity_favorite'] );
+
+	if ( ! empty( $buttons['activity_delete'] ) && $id ) {
+		$buttons['activity_delete'] = str_replace( array(
+			bp_get_activity_delete_url(),
+			' confirm',
+			'delete-activity',
+			'<span class="bp-screen-reader-text"></span>'
+		), array(
+			esc_url( post_activities_get_activity_edit_link( $id ) ),
+			'',
+			'edit-activity',
+			__( 'Modifier', 'activites-d-article' )
+		), $buttons['activity_delete'] );
+	}
+
+	return $buttons;
+}
+add_filter( 'bp_nouveau_return_activity_entry_buttons', 'post_activities_get_nouveau_activity_entry_buttons', 10, 2 );
+
+function post_activities_can_favorite( $can_favorite = true, $activity = null ) {
+	if ( 'nouveau' === bp_get_theme_compat_id() ) {
+		return $can_favorite;
+	}
+
+	$type = post_activities_get_activity_type( $activity );
+
+	if ( 'publication_activity' === $type ) {
+		$can_favorite = false;
+	}
+
+	return $can_favorite;
+}
+add_filter( 'bp_activity_can_favorite', 'post_activities_can_favorite', 20, 1 );
