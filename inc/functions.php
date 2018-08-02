@@ -158,6 +158,27 @@ function post_activities_new_activity_args( $args = array() ) {
 }
 add_filter( 'bp_after_activity_add_parse_args', 'post_activities_new_activity_args', 10, 1 );
 
+/**
+ * The BP Rest Activity Controller only returns raw values, we need to render the content.
+ *
+ * @since 1.0.0
+ *
+ * @param WP_REST_Response $response The BP Rest response.
+ * @param WP_REST_Response           The "rendered" BP Rest response.
+ */
+function post_activities_prepare_buddypress_activity_value( WP_REST_Response $response ) {
+	if ( isset( $response->data['content'] ) ) {
+		add_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
+
+		$response->data['content'] = apply_filters( 'bp_get_activity_content_body', $response->data['content'] );
+
+		remove_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
+	}
+
+	return $response;
+}
+add_filter( 'rest_prepare_buddypress_activity_value', 'post_activities_prepare_buddypress_activity_value', 10, 1 );
+
 function post_activities_front_register_scripts() {
 	if ( ! isset( wp_scripts()->registered['bp-nouveau-activity-post-form'] ) ) {
 		$js_base_url = trailingslashit( buddypress()->theme_compat->packages['nouveau']->__get( 'url' ) );
