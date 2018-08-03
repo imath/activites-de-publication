@@ -132,15 +132,38 @@
 			_.extend( options.data, data );
 
 			if ( 'read' === method ) {
+				var self = this, success = options.success;
+				options.success = function( data, textStatus, request ) {
+					if ( ! _.isUndefined( request ) ) {
+						self.totalPages      = parseInt( request.getResponseHeader( 'X-WP-TotalPages' ), 10 );
+						self.totalActivities = parseInt( request.getResponseHeader( 'X-WP-Total' ), 10 );
+					}
+
+					self.currentPage = options.data.page || 1;
+
+					if ( success ) {
+						return success.apply( this, arguments );
+					}
+				};
 				return wp.apiRequest( options );
 			}
 		}
+	} );
+
+	bp.Views.olderActivites = bp.View.extend( {
+		tagName  : 'li',
+		className: 'load-more',
+		template : bp.template( 'plus-d-activites-de-publication' )
 	} );
 
 	bp.Views.Activites = bp.View.extend( {
 		tagName  : 'ol',
 		id       : 'activites-liste',
 		className: 'comment-list',
+
+		events: {
+			'click .load-more a'  : 'fetchMoreActivities',
+		},
 
 		initialize: function() {
 			this.attachLoader();
@@ -168,12 +191,41 @@
 			} ) );
 		},
 
-		detachLoader: function() {
+		detachLoader: function( collection ) {
 			_.each( this.views._views[''], function( view ) {
 				if ( view.type && 'info' === view.type ) {
 					view.remove();
 				}
 			} );
+
+			if ( collection.currentPage && collection.totalPages && collection.currentPage < collection.totalPages ) {
+				this.views.add( new bp.Views.olderActivites( { model: new Backbone.Model( {
+					'nextPage': collection.currentPage + 1
+				} ) } ) );
+			}
+		},
+
+		fetchMoreActivities: function( event ) {
+			event.preventDefault();
+
+			var nextPage = $( event.currentTarget ).data( 'next-page' );
+
+			_.each( this.views._views[''], function( view ) {
+				if ( view.model.get( 'nextPage' ) ) {
+					view.remove();
+				}
+			} );
+
+			if ( nextPage ) {
+				this.attachLoader();
+
+				this.collection.fetch( {
+					data: {
+						page: nextPage,
+						per_page: 2
+					},
+				} );
+			}
 		}
 	} );
 

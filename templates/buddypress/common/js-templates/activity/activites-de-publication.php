@@ -29,3 +29,7 @@
         </div>
     </article>
 </script>
+
+<script type="text/html" id="tmpl-plus-d-activites-de-publication">
+    <a href="#" data-next-page="{{{data.nextPage}}}"><?php esc_html_e( 'Charger plus de conversations', 'activites-d-article' ); ?></a>
+</script>

@@ -66,3 +66,24 @@
 .bp-feedback.success {
     background-color: #8a2;
 }
+
+#activites-de-publication-list .load-more {
+    background: #fafafa;
+    border: 1px solid #eee;
+	font-size: 110%;
+	margin: 15px 0;
+	padding: 0;
+	text-align: center;
+}
+
+#activites-de-publication-list .load-more a {
+	color: #555;
+	display: block;
+	padding: 0.5em 0;
+}
+
+#activites-de-publication-list .load-more a:focus,
+#activites-de-publication-list .load-more a:hover {
+	background: #fff;
+	color: #333;
+}

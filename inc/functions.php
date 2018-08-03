@@ -189,7 +189,7 @@ function post_activities_get_activity_edit_link( $id = 0 ) {
  * @param  WP_REST_Response $response The BP Rest response.
  * @return WP_REST_Response           The "rendered" BP Rest response.
  */
-function post_activities_prepare_buddypress_activity_value( WP_REST_Response $response ) {
+function post_activities_prepare_bp_activity_value( WP_REST_Response $response ) {
 	if ( isset( $response->data['content'] ) ) {
 		add_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
 
@@ -216,7 +216,36 @@ function post_activities_prepare_buddypress_activity_value( WP_REST_Response $re
 
 	return $response;
 }
-add_filter( 'rest_prepare_buddypress_activity_value', 'post_activities_prepare_buddypress_activity_value', 10, 1 );
+add_filter( 'rest_prepare_buddypress_activity_value', 'post_activities_prepare_bp_activity_value', 10, 1 );
+
+/**
+ * Add the number of activities and pages into the corresponding Request headers.
+ *
+ * @since 1.0.0
+ *
+ * @param array            $activities The Result of the activity query.
+ * @param WP_REST_Response $response   The BP Rest response.
+ * @param WP_REST_Request  $request    The BP Rest request.
+ */
+function post_activities_get_bp_activities( $activities = array(), WP_REST_Response $response, WP_REST_Request $request ) {
+	if ( ! isset( $activities['activities'] ) || ! isset( $activities['total'] ) ) {
+		return;
+	}
+
+	$page             = $request->get_param( 'page' );
+	$per_page         = $request->get_param( 'per_page' );
+	$total_activities = (int) $activities['total'];
+
+	if ( ! $page || ! $per_page ) {
+		return;
+	}
+
+	$max_pages = ceil( $total_activities / (int) $per_page );
+
+	$response->header( 'X-WP-Total', (int) $total_activities );
+	$response->header( 'X-WP-TotalPages', (int) $max_pages );
+}
+add_action( 'rest_activity_get_items', 'post_activities_get_bp_activities', 10, 3 );
 
 function post_activities_front_register_scripts() {
 	if ( ! isset( wp_scripts()->registered['bp-nouveau-activity-post-form'] ) ) {
@@ -365,7 +394,7 @@ function post_activities_js_templates( $content = '' ) {
 	require_once( $path . 'buddypress/common/js-templates/activity/form.php' );
 
 	// Load the Entry template
-	bp_get_template_part( 'common/js-templates/activity/entry' );
+	bp_get_template_part( 'common/js-templates/activity/activites-de-publication' );
 
 	$templates = ob_get_clean();
 
