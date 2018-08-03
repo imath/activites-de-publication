@@ -296,11 +296,11 @@ function post_activities_front_enqueue_scripts() {
 		'secondaryID'       => $post->ID,
 		// Use the comment_form() fields to be as close to the theme output as possible.
 		'commentFormFields' => apply_filters( 'comment_form_defaults', array(
-			'must_log_in' => '<p class="must-log-in">' . sprintf(
+			'must_log_in' => sprintf(
 			/* translators: %s: login URL */
 			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des activités.', 'activites-d-article' ),
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
-		) . '</p>',
+		),
 		) ),
 	) );
 

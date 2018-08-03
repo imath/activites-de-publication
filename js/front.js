@@ -111,7 +111,30 @@
 	} );
 
 	bp.Collections.activites = Backbone.Collection.extend( {
-		model: bp.Models.activite
+		model: bp.Models.activite,
+		options : {
+			path: _activitesDePublicationSettings.versionString + '/activity/',
+			type: 'GET',
+			data: {
+				type : 'publication_activity',
+				'primary_id' : _activitesDePublicationSettings.primaryID,
+				'secondary_id' : _activitesDePublicationSettings.secondaryID,
+			},
+			dataType: 'json'
+		},
+
+		sync: function( method, model, options ) {
+			options  = options || {};
+			options.context = this;
+			var data = options.data || {};
+
+			_.extend( options, this.options );
+			_.extend( options.data, data );
+
+			if ( 'read' === method ) {
+				return wp.apiRequest( options );
+			}
+		}
 	} );
 
 	bp.Views.Activites = bp.View.extend( {
@@ -120,7 +143,10 @@
 		className: 'comment-list',
 
 		initialize: function() {
+			this.attachLoader();
+
 			this.collection.on( 'add', this.addActiviteView, this );
+			this.collection.on( 'sync', this.detachLoader, this );
 		},
 
 		addActiviteView: function( activite ) {
@@ -132,6 +158,22 @@
 			}
 
 			this.views.add( new bp.Views.Activite( { model: activite } ), options );
+		},
+
+		attachLoader: function() {
+			this.views.add( new bp.Views.activityFeedback( {
+				tagName: 'li',
+				value: 'Chargement en cours',
+				type: 'info'
+			} ) );
+		},
+
+		detachLoader: function() {
+			_.each( this.views._views[''], function( view ) {
+				if ( view.type && 'info' === view.type ) {
+					view.remove();
+				}
+			} );
 		}
 	} );
 
@@ -141,39 +183,34 @@
 		className: 'comment depth-1'
 	} );
 
-	// @todo Backbone model/collection and views to list Post activities.
-	wp.apiRequest( {
-		path: _activitesDePublicationSettings.versionString + '/activity/',
-		type: 'GET',
+	// Globalize the Collection.
+	bp.ActivitesDePublications = {
+		activites: new bp.Collections.activites()
+	}
+
+	// Fetch the activities.
+	bp.ActivitesDePublications.activites.fetch( {
 		data: {
-			type : 'publication_activity',
-			'primary_id' : _activitesDePublicationSettings.primaryID,
-			'secondary_id' : _activitesDePublicationSettings.secondaryID,
+			page: 1,
+			per_page: 2
 		},
-		dataType: 'json'
-	} ).done( function( response ) {
-		bp.Nouveau.Activity.postForm.start();
-
-		// Globalize the Collection.
-		bp.ActivitesDePublications = {
-			activites: new bp.Collections.activites(),
-		}
-
-		var activitesView = new bp.Views.Activites( { collection: bp.ActivitesDePublications.activites } );
-
-		activitesView.inject( '#activites-de-publication-list' );
-
-		if ( _.isArray( response ) && response.length > 0 ) {
-			_.each( response, function( model ) {
-				bp.ActivitesDePublications.activites.add( model );
-			} );
-		}
-
-	} ).fail( function( response ) {
-
-		if ( response.responseJSON && 'rest_authorization_required' === response.responseJSON.code ) {
-			$( '#bp-nouveau-activity-form' ).html( _activitesDePublicationSettings.commentFormFields.must_log_in );
+		success: function() {
+			bp.Nouveau.Activity.postForm.start();
+		},
+		error: function( collection, response ) {
+			if ( response.responseJSON && 'rest_authorization_required' === response.responseJSON.code ) {
+				// Inject the login feedback.
+				var feedback = new bp.Views.activityFeedback( {
+					value: _activitesDePublicationSettings.commentFormFields.must_log_in,
+					type: 'info'
+				} ).inject( '#activites-de-publication-list' );
+			}
 		}
 	} );
+
+	// Inject the Activités main view.
+	var activitesView = new bp.Views.Activites( {
+		collection: bp.ActivitesDePublications.activites
+	} ).inject( '#activites-de-publication-list' );
 
 } )( jQuery, _, window.bp || {}, window.wp || {} );
