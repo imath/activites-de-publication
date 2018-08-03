@@ -302,6 +302,7 @@ function post_activities_front_enqueue_scripts() {
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
 		),
 		) ),
+		'loadingConversations' => __( 'Merci de patienter pendant le chargement des conversations.', 'activites-d-article' ),
 	) );
 
 	$activity_params = array(

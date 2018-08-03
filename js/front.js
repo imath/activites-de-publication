@@ -163,7 +163,7 @@
 		attachLoader: function() {
 			this.views.add( new bp.Views.activityFeedback( {
 				tagName: 'li',
-				value: 'Chargement en cours',
+				value: _activitesDePublicationSettings.loadingConversations,
 				type: 'info'
 			} ) );
 		},
