@@ -33,14 +33,25 @@ function post_activities_js_url() {
 }
 
 /**
- * Get the plugin's Assets Url.
+ * Get the plugin's BP Templates path.
  *
  * @since  1.0.0
  *
- * @return string the plugin's Assets Url.
+ * @return string the plugin's BP Templates path.
  */
-function post_activities_assets_url() {
-	return post_activities()->assets_url;
+function post_activities_bp_templates_dir() {
+	return trailingslashit( post_activities()->tpl_dir) . 'buddypress';
+}
+
+/**
+ * Get the plugin's BP Templates url.
+ *
+ * @since  1.0.0
+ *
+ * @return string the plugin's BP Templates url.
+ */
+function post_activities_bp_templates_url() {
+	return trailingslashit( post_activities()->tpl_url) . 'buddypress';
 }
 
 /**
@@ -241,6 +252,22 @@ function post_activities_front_register_scripts() {
 }
 add_action( 'bp_enqueue_scripts', 'post_activities_front_register_scripts', 4 );
 
+function post_activities_get_template_stack( $stack = array() ) {
+	return array_merge( $stack, array( post_activities_bp_templates_dir() ) );
+}
+
+function post_activities_locate_bp_template_asset( $asset = '' ) {
+	add_filter( 'bp_get_theme_compat_dir', 'post_activities_bp_templates_dir' );
+	add_filter( 'bp_get_theme_compat_url', 'post_activities_bp_templates_url' );
+
+	$located = bp_locate_template_asset( $asset );
+
+	remove_filter( 'bp_get_theme_compat_dir', 'post_activities_bp_templates_dir' );
+	remove_filter( 'bp_get_theme_compat_url', 'post_activities_bp_templates_url' );
+
+	return $located;
+}
+
 function post_activities_front_enqueue_scripts() {
 	if ( ! is_singular() ) {
 		return;
@@ -250,6 +277,16 @@ function post_activities_front_enqueue_scripts() {
 
 	if ( ! post_activities_is_post_type_supported( $post ) || true !== (bool) get_post_meta( $post->ID, 'activite_d_articles', true ) ) {
 		return;
+	}
+
+	// Temporarly overrides the BuddyPress Template Stack.
+	add_filter( 'bp_get_template_stack', 'post_activities_get_template_stack' );
+
+	$min = post_activities_min_suffix();
+	$css = post_activities_locate_bp_template_asset( "css/activites-de-publication{$min}.css" );
+
+	if ( isset( $css['uri'] ) ) {
+		wp_enqueue_style( 'activites-d-article-front-style', $css['uri'], array(), post_activities_version() );
 	}
 
 	wp_enqueue_script( 'activites-d-article-front-script' );
@@ -322,35 +359,20 @@ function post_activities_js_templates( $content = '' ) {
 	}
 
 	ob_start();
+
+	// Load the Post Form template
 	require_once( $path . 'buddypress/common/js-templates/activity/form.php' );
-	?>
-	<script type="text/html" id="tmpl-activites-de-publication">
-		<article class="comment-body">
-			<footer class="comment-meta">
-				<div class="comment-author vcard">
-					<img alt="" src="{{data.user_avatar.full}}" class="avatar avatar-100 photo" height="100" width="100">
-					<b class="fn"><a href="{{data.user_link}}" rel="nofollow" class="url">{{data.user_name}}</a></b>
-				</div>
-				<div class="comment-metadata">
-					<a href="{{data.link}}">
-						<time datetime="{{data.date}}">{{{data.human_date}}}</time>
-					</a>
-					<# if ( data.edit_link ) { #>
-						<span class="edit-link">
-							<a class="comment-edit-link" href="{{data.edit_link}}"><?php esc_html_e( 'Modifier', 'activites-d-article' ); ?></a>
-						</span>
-					<# } #>
-				</div>
-			</footer>
-			<div class="comment-content">
-				{{{data.content}}}
-			</div>
-		</article>
-	</script>
-	<?php
+
+	// Load the Entry template
+	bp_get_template_part( 'common/js-templates/activity/entry' );
+
 	$templates = ob_get_clean();
 
+	// Remove temporary overrides.
 	remove_filter( 'the_content', 'post_activities_js_templates' );
+	remove_filter( 'bp_get_template_stack', 'post_activities_get_template_stack' );
+
+	// Append the templates to the Post content.
 	return $content . $templates;
 }
 

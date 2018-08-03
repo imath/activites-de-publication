@@ -81,7 +81,8 @@ final class Post_Activities {
 		$this->lang_dir   = trailingslashit( $this->dir . 'languages' );
 		$this->inc_dir    = trailingslashit( $this->dir . 'inc' );
 		$this->js_url     = trailingslashit( $this->url . 'js' );
-		$this->assets_url = trailingslashit( $this->url . 'assets' );
+		$this->tpl_dir    = trailingslashit( $this->dir . 'templates' );
+		$this->tpl_url    = trailingslashit( $this->url . 'templates' );
 
 		// BP Rest
 		$this->bp_rest_is_enabled = class_exists( 'BP_REST_Activity_Endpoint', false );

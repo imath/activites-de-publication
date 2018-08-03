@@ -8,7 +8,8 @@
 		return;
 	}
 
-	var postForm = bp.Views.PostForm, postContainer = $( '#tmpl-activity-post-form-buttons' ).parent();
+	var postForm = bp.Views.PostForm, postContainer = $( '#tmpl-activity-post-form-buttons' ).parent(),
+	    postFormAvatar = bp.Views.FormAvatar;
 
 	// Container for the Nav and Activity post form (comments allowed).
 	if ( $( '#comments' ).length ) {
@@ -83,6 +84,20 @@
 			} ).fail( function( response ) {
 				self.model.set( 'errors', { type: 'error', value: response.responseJSON.message } );
 			} );
+		}
+	} );
+
+	/**
+	 * Activity Post Form Avatar overrides.
+	 */
+	bp.Views.FormAvatar = postFormAvatar.extend( {
+		initialize: function() {
+			// Use Parent initializer.
+			postFormAvatar.prototype.initialize.apply( this, arguments );
+
+			if ( this.model.get( 'display_avatar' ) ) {
+				this.el.className = 'comment-author vcard';
+			}
 		}
 	} );
 
