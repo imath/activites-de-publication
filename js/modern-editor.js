@@ -3,6 +3,10 @@
  */
 
 ( function( wp ) {
+	if ( 'undefined' === typeof _activitesDePublicationAdminSettings ) {
+		return;
+	}
+
 	var el = wp.element.createElement, compose = wp.element.compose, Fragment = wp.element.Fragment,
 	    PanelBody = wp.components.PanelBody, PanelRow = wp.components.PanelRow, FormToggle = wp.components.FormToggle,
 	    PluginSidebar = wp.editPost.PluginSidebar, PluginSidebarMoreMenuItem = wp.editPost.PluginSidebarMoreMenuItem,
@@ -22,7 +26,7 @@
 	var PostActivityToggle = compose( [
 		postData.withSelect( function( select ) {
 			return {
-				checked: select( 'core/editor' ).getEditedPostAttribute( 'meta' ).activite_d_articles
+				checked: select( 'core/editor' ).getEditedPostAttribute( 'meta' ).activites_de_publication
 			};
 		} ),
 		postData.withDispatch( function( dispatch ) {
@@ -30,10 +34,10 @@
 				onChangeActivityToggle: function() {
 					var metas = postData.select( 'core/editor' ).getEditedPostAttribute( 'meta' );
 
-					if ( ! metas.activite_d_articles ) {
-						metas.activite_d_articles = true;
+					if ( ! metas.activites_de_publication ) {
+						metas.activites_de_publication = true;
 					} else {
-						metas.activite_d_articles = false;
+						metas.activites_de_publication = false;
 					}
 
 					dispatch( 'core/editor' ).editPost( { meta: metas } );
@@ -49,10 +53,10 @@
 			el( 'label', {
 				key: 'label',
 				htmlFor: 'toggle-activity'
-			}, 'Activer les activités BuddyPress' ),
+			}, _activitesDePublicationAdminSettings.activateLabel ),
 			el( PostActivityToggle, {
 				key: 'toggle',
-				checked: metas.activite_d_articles ? true : false
+				checked: metas.activites_de_publication ? true : false
 			} )
 		];
 
@@ -62,20 +66,20 @@
 			el(
 				PluginSidebarMoreMenuItem,
 				{
-					target: 'activites-d-article/conversation',
+					target: 'activites-de-publication/conversation',
 				},
-				'Activités d\'article'
+				_activitesDePublicationAdminSettings.moreMenuLabel
 			),
 			el(
 				PluginSidebar,
 				{
-					name: 'activites-d-article/conversation',
-					title: 'Activités d\'article',
+					name: 'activites-de-publication/conversation',
+					title: _activitesDePublicationAdminSettings.sidebarLabel,
 				},
 				el(
 					PanelBody,
 					{
-						title: 'Conversations'
+						title: _activitesDePublicationAdminSettings.settingsLabel
 					},
 					el( PanelRow, {}, children )
 				)
@@ -83,7 +87,7 @@
 		);
 	}
 
-	registerPlugin( 'activites-d-article', {
+	registerPlugin( 'activites-de-publication', {
 		icon: 'buddicons-activity',
 		render: activitesDarticleSidebar,
 	} );

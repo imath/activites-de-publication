@@ -111,7 +111,7 @@ function post_activities_init() {
 	);
 
 	foreach ( $post_types as $post_type ) {
-		register_post_meta( $post_type, 'activite_d_articles', $common_args );
+		register_post_meta( $post_type, 'activites_de_publication', $common_args );
 	}
 }
 add_action( 'init', 'post_activities_init', 50 );
@@ -304,7 +304,7 @@ function post_activities_front_enqueue_scripts() {
 
 	$post = get_post();
 
-	if ( ! post_activities_is_post_type_supported( $post ) || true !== (bool) get_post_meta( $post->ID, 'activite_d_articles', true ) ) {
+	if ( ! post_activities_is_post_type_supported( $post ) || true !== (bool) get_post_meta( $post->ID, 'activites_de_publication', true ) ) {
 		return;
 	}
 
