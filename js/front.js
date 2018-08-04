@@ -1,5 +1,14 @@
 /**
- * Custom Sidebar
+ * Activités de publication front script.
+ *
+ * @todo {
+ *  - Be consistent between post status & hide sitewide,
+ *  - Add an exclude option with the just posted activities,
+ *  - Make sure the mentions script is loaded and works.
+ *  - Check why it's not possible to remove an activity from the single Activity Edit Adminscreen
+ *  - Improve inline comments,
+ *  - Finish the renaming from activités d'article to activités de publication.
+ * }
  */
 
 ( function( $, _, bp, wp ) {
