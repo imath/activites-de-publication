@@ -42,7 +42,7 @@ function post_activities_admin_display_metabox( $post = null ) {
 	printf( '
 		<p>
 			<input type="checkbox" name="_activite_d_articles_meta_values[current]" id="activite-d-articles-enabled" value="1" %2$s/> <label for="activite-d-articles-enabled">%3$s</label>
-			<input type="hidden" name="_activite_d_articles_meta_values[previous]" value="%4$d"
+			<input type="hidden" name="_activite_d_articles_meta_values[previous]" value="%4$d" />
 		</p>
 		',
 		esc_html__( 'Activités d\'article', 'activite-d-article' ),
@@ -103,7 +103,9 @@ function post_activities_admin_save_metabox( $post_id = 0 ) {
 }
 
 function post_activities_admin_register_metaboxes() {
-	foreach ( post_activities_supported_post_types() as $post_type ) {
+	$post_types = get_post_types_by_support( 'activites_de_publication' );
+
+	foreach ( $post_types as $post_type ) {
 		// Add metabox UI
 		add_action( "add_meta_boxes_{$post_type}", 'post_activities_admin_add_metabox', 10, 1 );
 

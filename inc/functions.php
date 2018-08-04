@@ -78,30 +78,30 @@ function post_activities_min_suffix() {
 	return apply_filters( 'post_activities_min_suffix', $min );
 }
 
-function post_activities_supported_post_types() {
-	return apply_filters( 'post_activities_supported_post_types', array(
-		'post',
-		'page',
-	) );
-}
-
 function post_activities_is_post_type_supported( WP_Post $post ) {
-	$retval = false;
 	$type   = get_post_type( $post );
+	$retval = post_type_supports( $type, 'activites_de_publication' );
 
-	if ( in_array( $type, post_activities_supported_post_types(), true ) ) {
-		$retval = true;
-	}
-
-	if ( 'page' === $type && in_array( $post->ID, bp_core_get_directory_page_ids(), true ) ) {
+	if ( $retval && 'page' === $type && in_array( $post->ID, bp_core_get_directory_page_ids(), true ) ) {
 		$retval = false;
 	}
 
 	return $retval;
 }
 
+/**
+ * Add Support for Publication activity to WordPress posts and pages.
+ *
+ * @since  1.0.0
+ */
+function post_activities_create_initial_supports() {
+	add_post_type_support( 'post', 'activites_de_publication' );
+	add_post_type_support( 'page', 'activites_de_publication' );
+}
+add_action( 'init', 'post_activities_create_initial_supports', 1 );
+
 function post_activities_init() {
-	$supported_post_types = post_activities_supported_post_types();
+	$post_types = get_post_types_by_support( 'activites_de_publication' );
 
 	$common_args = array(
 		'type'        => 'boolean',
@@ -110,11 +110,11 @@ function post_activities_init() {
 		'show_in_rest'=> true,
 	);
 
-	foreach ( $supported_post_types as $post_type ) {
+	foreach ( $post_types as $post_type ) {
 		register_post_meta( $post_type, 'activite_d_articles', $common_args );
 	}
 }
-add_action( 'bp_init', 'post_activities_init' );
+add_action( 'init', 'post_activities_init', 50 );
 
 function post_activities_rest_init() {
 	if ( post_activities()->bp_rest_is_enabled ) {
