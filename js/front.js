@@ -166,10 +166,10 @@
 		},
 
 		initialize: function() {
-			this.attachLoader();
+			this.attachFeedback();
 
 			this.collection.on( 'add', this.addActiviteView, this );
-			this.collection.on( 'sync', this.detachLoader, this );
+			this.collection.on( 'sync', this.detachFeedback, this );
 		},
 
 		addActiviteView: function( activite ) {
@@ -183,15 +183,17 @@
 			this.views.add( new bp.Views.Activite( { model: activite } ), options );
 		},
 
-		attachLoader: function() {
+		attachFeedback: function( message ) {
+			message = message || _activitesDePublicationSettings.loadingConversations;
+
 			this.views.add( new bp.Views.activityFeedback( {
 				tagName: 'li',
-				value: _activitesDePublicationSettings.loadingConversations,
+				value: message,
 				type: 'info'
 			} ) );
 		},
 
-		detachLoader: function( collection ) {
+		detachFeedback: function( collection ) {
 			_.each( this.views._views[''], function( view ) {
 				if ( view.type && 'info' === view.type ) {
 					view.remove();
@@ -202,6 +204,10 @@
 				this.views.add( new bp.Views.olderActivites( { model: new Backbone.Model( {
 					'nextPage': collection.currentPage + 1
 				} ) } ) );
+			}
+
+			if ( 0 === collection.length ) {
+				this.attachFeedback( _activitesDePublicationSettings.noConversations );
 			}
 		},
 
@@ -217,7 +223,7 @@
 			} );
 
 			if ( nextPage ) {
-				this.attachLoader();
+				this.attachFeedback();
 
 				this.collection.fetch( {
 					data: {

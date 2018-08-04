@@ -332,6 +332,7 @@ function post_activities_front_enqueue_scripts() {
 		),
 		) ),
 		'loadingConversations' => __( 'Merci de patienter pendant le chargement des conversations.', 'activites-d-article' ),
+		'noConversations' => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-d-article' ),
 	) );
 
 	$activity_params = array(
