@@ -36,82 +36,8 @@
 	);
 
 	/**
-	 * Activity Post Form overrides.
+	 * Model for the Activité de publication item.
 	 */
-	bp.Views.PostForm = postForm.extend( {
-		postUpdate: function( event ) {
-			if ( event ) {
-				if ( 'keydown' === event.type && ( 13 !== event.keyCode || ! event.ctrlKey ) ) {
-					return event;
-				}
-
-				event.preventDefault();
-			}
-
-			var self = this,
-			    meta = {};
-
-			// Set the content and meta
-			_.each( this.$el.serializeArray(), function( pair ) {
-				pair.name = pair.name.replace( '[]', '' );
-				if ( 'whats-new' === pair.name ) {
-					self.model.set( 'content', pair.value );
-				} else if ( -1 === _.indexOf( ['aw-whats-new-submit', 'whats-new-post-in'], pair.name ) ) {
-					if ( _.isUndefined( meta[ pair.name ] ) ) {
-						meta[ pair.name ] = pair.value;
-					} else {
-						if ( ! _.isArray( meta[ pair.name ] ) ) {
-							meta[ pair.name ] = [ meta[ pair.name ] ];
-						}
-
-						meta[ pair.name ].push( pair.value );
-					}
-				}
-			} );
-
-			// Silently add meta
-			this.model.set( meta, { silent: true } );
-
-			// @todo this should be in the model.
-			wp.apiRequest( {
-				path: _activitesDePublicationSettings.versionString + '/activity/',
-				type: 'POST',
-				data: _.extend( self.model.attributes, {
-					type : 'publication_activity',
-					'item_id' : _activitesDePublicationSettings.primaryID,
-					'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
-				} ),
-				dataType: 'json'
-			} ).done( function( response ) {
-				// Get the first activity and add it to the collection.
-				if ( _.isArray( response ) && response.length > 0 ) {
-					var published = _.extend( _.first( response ), { at: 0} );
-					bp.ActivitesDePublications.activites.add( published );
-				}
-
-				// Reset the form
-				self.resetForm();
-
-			} ).fail( function( response ) {
-				self.model.set( 'errors', { type: 'error', value: response.responseJSON.message } );
-			} );
-		}
-	} );
-
-	/**
-	 * Activity Post Form Avatar overrides.
-	 */
-	bp.Views.FormAvatar = postFormAvatar.extend( {
-		initialize: function() {
-			// Use Parent initializer.
-			postFormAvatar.prototype.initialize.apply( this, arguments );
-
-			if ( this.model.get( 'display_avatar' ) ) {
-				this.el.className = 'comment-author vcard';
-			}
-		}
-	} );
-
 	bp.Models.activite = Backbone.Model.extend( {
 		defaults: {
 			id      : 0,
@@ -119,8 +45,29 @@
 			content : '',
 			type    : ''
 		},
+		options : {
+			path: _activitesDePublicationSettings.versionString + '/activity/',
+			type: 'POST',
+			data: {},
+			dataType: 'json'
+		},
+
+		sync: function( method, model, options ) {
+			options  = options || {};
+			options.context = this;
+
+			_.extend( options, this.options );
+			_.extend( options.data, model.attributes );
+
+			if ( 'create' === method || 'update' === method ) {
+				return wp.apiRequest( options );
+			}
+		}
 	} );
 
+	/**
+	 * Collection for the Activités de publication items.
+	 */
 	bp.Collections.activites = Backbone.Collection.extend( {
 		model: bp.Models.activite,
 		options : {
@@ -134,7 +81,7 @@
 			dataType: 'json'
 		},
 
-		sync: function( method, model, options ) {
+		sync: function( method, collection, options ) {
 			options  = options || {};
 			options.context = this;
 			var data = options.data || {};
@@ -157,6 +104,81 @@
 					}
 				};
 				return wp.apiRequest( options );
+			}
+		}
+	} );
+
+	/**
+	 * Activity Post Form overrides.
+	 */
+	bp.Views.PostForm = postForm.extend( {
+		postUpdate: function( event ) {
+			if ( event ) {
+				if ( 'keydown' === event.type && ( 13 !== event.keyCode || ! event.ctrlKey ) ) {
+					return event;
+				}
+
+				event.preventDefault();
+			}
+
+			var self = this, meta = {},
+			    activite = new bp.Models.activite();
+
+			// Set the content and meta
+			_.each( this.$el.serializeArray(), function( pair ) {
+				pair.name = pair.name.replace( '[]', '' );
+				if ( 'whats-new' === pair.name ) {
+					self.model.set( 'content', pair.value );
+				} else if ( -1 === _.indexOf( ['aw-whats-new-submit', 'whats-new-post-in'], pair.name ) ) {
+					if ( _.isUndefined( meta[ pair.name ] ) ) {
+						meta[ pair.name ] = pair.value;
+					} else {
+						if ( ! _.isArray( meta[ pair.name ] ) ) {
+							meta[ pair.name ] = [ meta[ pair.name ] ];
+						}
+
+						meta[ pair.name ].push( pair.value );
+					}
+				}
+			} );
+
+			// Silently add meta
+			this.model.set( meta, { silent: true } );
+
+			// Save the activity
+			activite.save(
+				_.extend( this.model.attributes, {
+					type: 'publication_activity',
+					'item_id' : _activitesDePublicationSettings.primaryID,
+					'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
+					user: this.model.get( 'user_id' ),
+				} ), {
+					success: function( model, response ) {
+						// Get the first activity and add it to the collection.
+						var published = _.extend( _.first( response ), { at: 0 } );
+						bp.ActivitesDePublications.activites.add( published );
+
+						// Reset the form
+						self.resetForm();
+					},
+					error: function( model, response ) {
+						self.model.set( 'errors', { type: 'error', value: response.responseJSON.message } );
+					}
+				}
+			);
+		}
+	} );
+
+	/**
+	 * Activity Post Form Avatar overrides.
+	 */
+	bp.Views.FormAvatar = postFormAvatar.extend( {
+		initialize: function() {
+			// Use Parent initializer.
+			postFormAvatar.prototype.initialize.apply( this, arguments );
+
+			if ( this.model.get( 'display_avatar' ) ) {
+				this.el.className = 'comment-author vcard';
 			}
 		}
 	} );
@@ -217,6 +239,7 @@
 				activite.unset( 'at', { silent: true } );
 			}
 
+			this.removeInfos();
 			this.views.add( new bp.Views.Activite( { model: activite } ), options );
 		},
 
@@ -230,12 +253,16 @@
 			} ) );
 		},
 
-		detachFeedback: function( collection ) {
+		removeInfos: function() {
 			_.each( this.views._views[''], function( view ) {
 				if ( view.type && 'info' === view.type ) {
 					view.remove();
 				}
 			} );
+		},
+
+		detachFeedback: function( collection ) {
+			this.removeInfos();
 
 			if ( collection.currentPage && collection.totalPages && collection.currentPage < collection.totalPages ) {
 				this.views.add( new bp.Views.olderActivites( { model: new Backbone.Model( {
