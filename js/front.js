@@ -9,20 +9,31 @@
 	}
 
 	var postForm = bp.Views.PostForm, postContainer = $( '#tmpl-activity-post-form-buttons' ).parent(),
-	    postFormAvatar = bp.Views.FormAvatar;
+	    postFormAvatar = bp.Views.FormAvatar, containerClass = 'no-nav';
 
 	// Container for the Nav and Activity post form (comments allowed).
 	if ( $( '#comments' ).length ) {
+		containerClass = 'hide';
+
 		$( '#comments' ).before( $( '<div></div>' ).prop( 'id', 'activites-de-publication-nav' ) );
-		$( '#activites-de-publication-nav' ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
+		$( '#activites-de-publication-nav' ).after(
+			$( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' )
+			                  .addClass( containerClass )
+		);
 
 	// Container for the Activity post form (comments not allowed).
 	} else {
-		$( postContainer ).after( $( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' ) );
+		$( postContainer ).after(
+			$( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' )
+			                  .addClass( containerClass )
+		);
 	}
 
 	// Container for the list of Activities for this Post.
-	$( '#bp-nouveau-activity-form' ).after( $( '<div></div>' ).prop( 'id', 'activites-de-publication-list' ) );
+	$( '#bp-nouveau-activity-form' ).after(
+		$( '<div></div>' ).prop( 'id', 'activites-de-publication-list' )
+		                  .addClass( containerClass )
+	);
 
 	/**
 	 * Activity Post Form overrides.
@@ -156,6 +167,32 @@
 		template : bp.template( 'plus-d-activites-de-publication' )
 	} );
 
+	bp.Views.navToggle = bp.View.extend( {
+		tagName  : 'ul',
+		template : bp.template( 'activites-de-publication-nav' ),
+
+		events: {
+			'click .nav-item a'  : 'toggleNav',
+		},
+
+		toggleNav: function( event ) {
+			event.preventDefault();
+
+			this.$el.find( '.nav-item' ).removeClass( 'current' );
+			$( event.currentTarget ).parent().addClass( 'current' );
+
+			if ( 'conversations' === $( event.currentTarget ).data( 'type' ) ) {
+				$( '#bp-nouveau-activity-form' ).removeClass( 'hide' );
+				$( '#activites-de-publication-list' ).removeClass( 'hide' );
+				$( '#comments' ).hide();
+			} else {
+				$( '#bp-nouveau-activity-form' ).addClass( 'hide' );
+				$( '#activites-de-publication-list' ).addClass( 'hide' );
+				$( '#comments' ).show();
+			}
+		}
+	} );
+
 	bp.Views.Activites = bp.View.extend( {
 		tagName  : 'ol',
 		id       : 'activites-liste',
@@ -265,6 +302,10 @@
 			}
 		}
 	} );
+
+	if ( $( '#activites-de-publication-nav' ).length ) {
+		var navToggle = new bp.Views.navToggle().inject( '#activites-de-publication-nav' );
+	}
 
 	// Inject the Activités main view.
 	var activitesView = new bp.Views.Activites( {
