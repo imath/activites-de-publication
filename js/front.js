@@ -2,7 +2,6 @@
  * Activités de publication front script.
  *
  * @todo {
- *  - Add an exclude option with the just posted activities,
  *  - Make sure the mentions script is loaded and works.
  *  - Check why it's not possible to remove an activity from the single Activity Edit Adminscreen
  *  - Improve inline comments,
@@ -175,6 +174,13 @@
 						// Get the first activity and add it to the collection.
 						var published = _.extend( _.first( response ), { at: 0 } );
 						bp.ActivitesDePublications.activites.add( published );
+
+						// Make sure the paginate results are kept consistent.
+						if ( _.isUndefined( bp.ActivitesDePublications.activites.options.data.exclude ) ) {
+							bp.ActivitesDePublications.activites.options.data.exclude = [];
+						}
+
+						bp.ActivitesDePublications.activites.options.data.exclude.push( published.id );
 
 						// Reset the form
 						self.resetForm();
