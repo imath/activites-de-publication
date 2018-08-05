@@ -368,6 +368,8 @@ function post_activities_front_enqueue_scripts() {
 			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des conversations.', 'activites-d-article' ),
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
 		),
+		'publishLabel'         => __( 'Publier', 'activites-d-article' ),
+		'textareaPlaceholder'  => __( 'Participez aux conversations !', 'activites-d-article' ),
 		'loadingConversations' => __( 'Merci de patienter pendant le chargement des conversations.', 'activites-d-article' ),
 		'noConversations'      => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-d-article' ),
 	) );

@@ -17,7 +17,7 @@
 	}
 
 	var postForm = bp.Views.PostForm, postContainer = $( '#tmpl-activity-post-form-buttons' ).parent(),
-	    postFormAvatar = bp.Views.FormAvatar, containerClass = 'no-nav';
+	    postFormAvatar = bp.Views.FormAvatar, postFormTextarea = bp.Views.WhatsNew, containerClass = 'no-nav';
 
 	// Container for the Nav and Activity post form (comments allowed).
 	if ( $( '#comments' ).length ) {
@@ -219,6 +219,18 @@
 		}
 	} );
 
+	/**
+	 * Activity Post Form Textarea overrides.
+	 */
+	bp.Views.WhatsNew = postFormTextarea.extend( {
+		initialize: function() {
+			this.el.placeholder = _activitesDePublicationSettings.textareaPlaceholder;
+
+			// Use Parent initializer.
+			postFormTextarea.prototype.initialize.apply( this, arguments );
+		}
+	} );
+
 	bp.Views.olderActivites = bp.View.extend( {
 		tagName  : 'li',
 		className: 'load-more',
@@ -344,6 +356,11 @@
 	// Globalize the Collection.
 	bp.ActivitesDePublications = {
 		activites: new bp.Collections.activites()
+	}
+
+	// BP String overrides
+	if ( ! _.isUndefined( BP_Nouveau.activity.strings.postUpdateButton ) ) {
+		BP_Nouveau.activity.strings.postUpdateButton = _activitesDePublicationSettings.publishLabel;
 	}
 
 	// Fetch the activities.
