@@ -363,6 +363,17 @@ function post_activities_front_enqueue_scripts() {
 		'primaryID'         => get_current_blog_id(),
 		'secondaryID'       => $post->ID,
 		'hideSitewide'      => $hide_sitewide,
+
+		/**
+		 * Filter here if you wish to edit the number of activities per page.
+		 *
+		 * @since  1.0.0
+		 *
+		 * @param  integer $value 20 (The same as default BuddyPress activity loop).
+		 * @param  WP_Post $post  The current post object.
+		 */
+		'activitiesPerPage' => apply_filters( 'post_activities_per_page', 20, $post ),
+
 		'mustLogIn'         => sprintf(
 			/* translators: %s: login URL */
 			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des conversations.', 'activites-d-article' ),

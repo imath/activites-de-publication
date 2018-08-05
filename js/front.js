@@ -340,7 +340,7 @@
 				this.collection.fetch( {
 					data: {
 						page: nextPage,
-						per_page: 2
+						per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
 					},
 				} );
 			}
@@ -367,7 +367,7 @@
 	bp.ActivitesDePublications.activites.fetch( {
 		data: {
 			page: 1,
-			per_page: 2
+			per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
 		},
 		success: function() {
 			bp.Nouveau.Activity.postForm.start();
