@@ -2,12 +2,13 @@
  * Activités de publication front script.
  *
  * @todo {
- *  - Be consistent between post status & hide sitewide,
  *  - Add an exclude option with the just posted activities,
  *  - Make sure the mentions script is loaded and works.
  *  - Check why it's not possible to remove an activity from the single Activity Edit Adminscreen
  *  - Improve inline comments,
  *  - Finish the renaming from activités d'article to activités de publication.
+ *  - display_comments ?
+ *  - responsive ?
  * }
  */
 
@@ -68,6 +69,10 @@
 			_.extend( options, this.options );
 			_.extend( options.data, model.attributes );
 
+			if ( 1 === parseInt( _activitesDePublicationSettings.hideSitewide, 10 ) ) {
+				options.data.hide_sitewide = 1;
+			}
+
 			if ( 'create' === method || 'update' === method ) {
 				return wp.apiRequest( options );
 			}
@@ -97,6 +102,10 @@
 
 			_.extend( options, this.options );
 			_.extend( options.data, data );
+
+			if ( 1 === parseInt( _activitesDePublicationSettings.hideSitewide, 10 ) ) {
+				options.data.hide_sitewide = 1;
+			}
 
 			if ( 'read' === method ) {
 				var self = this, success = options.success;
@@ -332,7 +341,7 @@
 			if ( response.responseJSON && 'rest_authorization_required' === response.responseJSON.code ) {
 				// Inject the login feedback.
 				var feedback = new bp.Views.activityFeedback( {
-					value: _activitesDePublicationSettings.commentFormFields.must_log_in,
+					value: _activitesDePublicationSettings.mustLogIn,
 					type: 'info'
 				} ).inject( '#activites-de-publication-list' );
 			}

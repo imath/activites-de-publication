@@ -158,6 +158,7 @@ function post_activities_new_activity_args( $args = array() ) {
 		$postData = wp_parse_args( $_POST, array(
 			'item_id'           => 0,
 			'secondary_item_id' => 0,
+			'hide_sitewide'     => false,
 		) );
 
 		$args = array_merge( $args, $postData, array(
@@ -168,6 +169,30 @@ function post_activities_new_activity_args( $args = array() ) {
 	return $args;
 }
 add_filter( 'bp_after_activity_add_parse_args', 'post_activities_new_activity_args', 10, 1 );
+
+/**
+ * Fixes 2 BP_REST_Activity_Endpoint issues.
+ *
+ * 1. The `show_hidden` argument is missing in create_item().
+ * 2. It should be possible to request for show_hidden in get_items().
+ *
+ * @param  array  $args The arguments for bp_activity_get().
+ * @return array        The arguments for bp_activity_get().
+ */
+function post_activities_get_activity_args( $args = array() ) {
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		if ( ! isset( $_REQUEST['type'] ) || 'publication_activity' !== $_REQUEST['type'] ) {
+			return $args;
+		}
+
+		if ( isset( $_REQUEST['hide_sitewide'] ) && true === (bool) $_REQUEST['hide_sitewide'] ) {
+			$args['show_hidden'] = true;
+		}
+	}
+
+	return $args;
+}
+add_filter( 'bp_after_activity_get_parse_args', 'post_activities_get_activity_args', 10, 1 );
 
 function post_activities_get_activity_edit_link( $id = 0 ) {
 	if ( ! $id ) {
@@ -308,6 +333,20 @@ function post_activities_front_enqueue_scripts() {
 		return;
 	}
 
+	// Take care of the Post status.
+	$post_status     = get_post_status( $post );
+	$post_status_obj = get_post_status_object( $post_status );
+	$hide_sitewide   = 0;
+
+	if ( true === (bool) $post_status_obj->private ) {
+		$hide_sitewide = 1;
+	}
+
+	// No need to use conversations in draft mode.
+	if ( true === (bool) $post_status_obj->protected && false === (bool) $post_status_obj->publicly_queryable ) {
+		return;
+	}
+
 	// Temporarly overrides the BuddyPress Template Stack.
 	add_filter( 'bp_get_template_stack', 'post_activities_get_template_stack' );
 
@@ -323,16 +362,14 @@ function post_activities_front_enqueue_scripts() {
 		'versionString'     => 'buddypress/v1',
 		'primaryID'         => get_current_blog_id(),
 		'secondaryID'       => $post->ID,
-		// Use the comment_form() fields to be as close to the theme output as possible.
-		'commentFormFields' => apply_filters( 'comment_form_defaults', array(
-			'must_log_in' => sprintf(
+		'hideSitewide'      => $hide_sitewide,
+		'mustLogIn'         => sprintf(
 			/* translators: %s: login URL */
-			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des activités.', 'activites-d-article' ),
+			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des conversations.', 'activites-d-article' ),
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
 		),
-		) ),
 		'loadingConversations' => __( 'Merci de patienter pendant le chargement des conversations.', 'activites-d-article' ),
-		'noConversations' => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-d-article' ),
+		'noConversations'      => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-d-article' ),
 	) );
 
 	$activity_params = array(
