@@ -2,7 +2,6 @@
  * Activités de publication front script.
  *
  * @todo {
- *  - Make sure the mentions script is loaded and works.
  *  - Check why it's not possible to remove an activity from the single Activity Edit Adminscreen
  *  - Improve inline comments,
  *  - Finish the renaming from activités d'article to activités de publication.
@@ -129,6 +128,19 @@
 	 * Activity Post Form overrides.
 	 */
 	bp.Views.PostForm = postForm.extend( {
+		initialize: function() {
+			// Use Parent initializer.
+			postForm.prototype.initialize.apply( this, arguments );
+
+			this.on( 'ready', this.bpMentionsRefresh, this );
+		},
+
+		bpMentionsRefresh: function() {
+			if ( 'undefined' !== typeof bp_mentions || 'undefined' !== typeof bp.mentions ) {
+				$( '.bp-suggestions' ).bp_mentions( bp.mentions.users );
+			}
+		},
+
 		postUpdate: function( event ) {
 			if ( event ) {
 				if ( 'keydown' === event.type && ( 13 !== event.keyCode || ! event.ctrlKey ) ) {
