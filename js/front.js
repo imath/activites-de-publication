@@ -190,7 +190,11 @@
 						self.resetForm();
 					},
 					error: function( model, response ) {
-						self.model.set( 'errors', { type: 'error', value: response.responseJSON.message } );
+						if ( ! _.isUndefined( _activitesDePublicationSettings.errors[ response.responseJSON.code ] ) ) {
+							self.model.set( 'errors', { type: 'error', value: _activitesDePublicationSettings.errors[ response.responseJSON.code ] } );
+						} else {
+							self.model.set( 'errors', { type: 'error', value: response.responseJSON.message } );
+						}
 					}
 				}
 			);

@@ -119,7 +119,7 @@ function post_activities_register_meta() {
 
 	$common_args = array(
 		'type'        => 'boolean',
-		'description' => __( 'Activer ou non les activités d\'articles', 'activites-de-publication' ),
+		'description' => __( 'Activer ou non les activités de publication', 'activites-de-publication' ),
 		'single'      => true,
 		'show_in_rest'=> true,
 	);
@@ -169,9 +169,9 @@ function post_activities_register_activity_type() {
 	bp_activity_set_action(
 		buddypress()->activity->id,
 		'publication_activity',
-		__( 'Nouvelle activité d\'article', 'activites-de-publication' ),
+		__( 'Nouvelle activité de publication', 'activites-de-publication' ),
 		'post_activities_format_activity_action',
-		__( 'Activités d\'article', 'activites-de-publication' ),
+		__( 'Activités de publication', 'activites-de-publication' ),
 		array( 'activity', 'member' )
 	);
 }
@@ -468,6 +468,12 @@ function post_activities_front_enqueue_scripts() {
 		'textareaPlaceholder'  => __( 'Participez aux conversations !', 'activites-de-publication' ),
 		'loadingConversations' => __( 'Merci de patienter pendant le chargement des conversations.', 'activites-de-publication' ),
 		'noConversations'      => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-de-publication' ),
+		'errors' => array(
+			'rest_authorization_required'        => __( 'Désolé, vous n’êtes pas autorisé·e à consulter les activités de cette publication.', 'activites-de-publication' ),
+			'rest_user_cannot_create_activity'   => __( 'Désolé, nous ne sommes pas en mesure de créer cette activité de publication.', 'activites-de-publication' ),
+			'rest_authorization_required'        => __( 'Désolé, vous n’êtes pas autorisé·e à créer des activités pour cette publication.', 'activites-de-publication' ),
+			'rest_create_activity_empty_content' => __( 'Merci d’ajouter du contenu à votre activité de publication à l’aide du champ texte multiligne.', 'activites-de-publication' ),
+		),
 	) );
 
 	$activity_params = array(
