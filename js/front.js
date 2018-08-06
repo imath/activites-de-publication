@@ -5,7 +5,6 @@
  *  - Improve inline comments,
  *  - Finish the renaming from activités d'article to activités de publication.
  *  - display_comments ?
- *  - responsive ?
  * }
  */
 
