@@ -120,3 +120,46 @@ function post_activities_admin_register_metaboxes() {
 	}
 }
 add_action( 'init', 'post_activities_admin_register_metaboxes', 100 );
+
+/**
+ * Adds a delete link to the Activity Admin Edit screen.
+ *
+ * @todo open a ticket on https://buddypress.trac.wordpress.org
+ *
+ * @since 1.0.0
+ */
+function post_activities_admin_add_inline_script() {
+	$doaction = '';
+	if ( isset( $_REQUEST['action'] ) ) {
+		$doaction = $_REQUEST['action'];
+	}
+
+	$aid = 0;
+	if ( isset( $_REQUEST['aid'] ) ) {
+		$aid = (int) $_REQUEST['aid'];
+	}
+
+	if ( 'edit' !== $doaction || ! $aid ) {
+		return;
+	}
+
+	$delete_url = wp_nonce_url( add_query_arg( array(
+		'page'   => 'bp-activity',
+		'aid'    => $aid,
+		'action' => 'delete',
+	), bp_get_admin_url( 'admin.php' ) ), "spam-activity_{$aid}" );
+
+	wp_add_inline_script( 'bp_activity_admin_js', sprintf( '
+		( function( $ ) {
+			$( \'#publishing-action\' ).before(
+				$( \'<div></div>\' ).prop( \'id\', \'delete-action\' )
+				                    .html(
+										$( \'<a></a>\' ).addClass( \'submitdelete deletion\' )
+														.prop( \'href\', \'%1$s\' )
+														.html( \'%2$s\' )
+									)
+			);
+		} )( jQuery );
+	', str_replace( '&amp;', '&', esc_url_raw( $delete_url ) ), esc_html__( 'Supprimer définitivement', 'activites-d-article' ) ) );
+}
+add_action( 'bp_activity_admin_enqueue_scripts', 'post_activities_admin_add_inline_script' );

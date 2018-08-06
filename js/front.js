@@ -2,7 +2,6 @@
  * Activités de publication front script.
  *
  * @todo {
- *  - Check why it's not possible to remove an activity from the single Activity Edit Adminscreen
  *  - Improve inline comments,
  *  - Finish the renaming from activités d'article to activités de publication.
  *  - display_comments ?
