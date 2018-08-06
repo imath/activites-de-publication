@@ -1,17 +1,17 @@
 <?php
 /**
- * Plugin Name: Activités d'article
- * Plugin URI: https://imathi.eu/tag/activites-d-article/
- * Description: Utilisez les activités de BuddyPress pour dynamiser les conversations dans vos articles WordPress.
+ * Plugin Name: Activités de Publication
+ * Plugin URI: https://imathi.eu/tag/activites-de-publication/
+ * Description: Utilisez les activités de BuddyPress pour dynamiser les conversations de vos publications WordPress.
  * Version: 1.0.0
  * Requires at least: 4.9.8
  * Tested up to: 5.0
  * License: GPLv2 or later
  * Author: imath
  * Author URI: https://imathi.eu/
- * Text Domain: activites-d-article
+ * Text Domain: activites-de-publication
  * Domain Path: /languages/
- * GitHub Plugin URI: https://github.com/imath/activites-d-article
+ * GitHub Plugin URI: https://github.com/imath/activites-de-publication
  */
 
 // Exit if accessed directly
@@ -69,7 +69,7 @@ final class Post_Activities {
 		$this->version = '1.0.0';
 
 		// Domain
-		$this->domain = 'activites-d-article';
+		$this->domain = 'activites-de-publication';
 
 		// Base name
 		$this->file      = __FILE__;
@@ -96,7 +96,7 @@ final class Post_Activities {
 	private function inc() {
 		// This plugin requires WordPress 4.9.8 & the BuddyPress Nouveau template pack.
 		if ( ! bp_is_active( 'activity' ) || ! function_exists( 'register_post_meta' ) || ! function_exists( 'bp_check_theme_template_pack_dependency' ) ) {
-			_doing_it_wrong( 'post_activities()', __( 'Cette extension nécessite à minima WordPress 4.9.8, BuddyPress 3.0 et requiert que le composant des activités soit actif.', 'activites-d-article' ), '1.0.0' );
+			_doing_it_wrong( 'post_activities()', __( 'Cette extension nécessite à minima WordPress 4.9.8, BuddyPress 3.0 et requiert que le composant des activités soit actif.', 'activites-de-publication' ), '1.0.0' );
 			return;
 		}
 

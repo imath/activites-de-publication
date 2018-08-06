@@ -2,7 +2,7 @@
 /**
  * Post Activities functions.
  *
- * @package Activites_d_article\inc
+ * @package Activites_de_Publication\inc
  *
  * @since  1.0.0
  */
@@ -11,7 +11,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Get plugin's version.
+ * Gets plugin's version.
  *
  * @since  1.0.0
  *
@@ -22,7 +22,7 @@ function post_activities_version() {
 }
 
 /**
- * Get the plugin's JS Url.
+ * Gets the plugin's JS Url.
  *
  * @since  1.0.0
  *
@@ -33,7 +33,7 @@ function post_activities_js_url() {
 }
 
 /**
- * Get the plugin's BP Templates path.
+ * Gets the plugin's BP Templates path.
  *
  * @since  1.0.0
  *
@@ -44,7 +44,7 @@ function post_activities_bp_templates_dir() {
 }
 
 /**
- * Get the plugin's BP Templates url.
+ * Gets the plugin's BP Templates url.
  *
  * @since  1.0.0
  *
@@ -55,7 +55,7 @@ function post_activities_bp_templates_url() {
 }
 
 /**
- * Get the JS minified suffix.
+ * Gets the JS minified suffix.
  *
  * @since  1.0.0
  *
@@ -78,6 +78,15 @@ function post_activities_min_suffix() {
 	return apply_filters( 'post_activities_min_suffix', $min );
 }
 
+/**
+ * Checks whether a given post type entry supports Activités de publication.
+ *
+ * @since  1.0.0
+ *
+ * @param  WP_Post $post The post type entry object.
+ * @return boolean       True if the post type entry supports Activités de publication.
+ *                       False otherwise.
+ */
 function post_activities_is_post_type_supported( WP_Post $post ) {
 	$type   = get_post_type( $post );
 	$retval = post_type_supports( $type, 'activites_de_publication' );
@@ -90,7 +99,7 @@ function post_activities_is_post_type_supported( WP_Post $post ) {
 }
 
 /**
- * Add Support for Publication activity to WordPress posts and pages.
+ * Adds Support for Activités de publication to WordPress posts and pages.
  *
  * @since  1.0.0
  */
@@ -100,12 +109,17 @@ function post_activities_create_initial_supports() {
 }
 add_action( 'init', 'post_activities_create_initial_supports', 1 );
 
-function post_activities_init() {
+/**
+ * Registers the post meta for the Post types supporting Activités de publication.
+ *
+ * @since  1.0.0
+ */
+function post_activities_register_meta() {
 	$post_types = get_post_types_by_support( 'activites_de_publication' );
 
 	$common_args = array(
 		'type'        => 'boolean',
-		'description' => __( 'Activer ou non les activités d\'articles', 'activites-d-article' ),
+		'description' => __( 'Activer ou non les activités d\'articles', 'activites-de-publication' ),
 		'single'      => true,
 		'show_in_rest'=> true,
 	);
@@ -114,8 +128,13 @@ function post_activities_init() {
 		register_post_meta( $post_type, 'activites_de_publication', $common_args );
 	}
 }
-add_action( 'init', 'post_activities_init', 50 );
+add_action( 'init', 'post_activities_register_meta', 50 );
 
+/**
+ * Registers the included Rest Activity Endpoint if the BP Rest API is not active on the site.
+ *
+ * @since  1.0.0
+ */
 function post_activities_rest_init() {
 	if ( post_activities()->bp_rest_is_enabled ) {
 		return;
@@ -126,29 +145,51 @@ function post_activities_rest_init() {
 }
 add_action( 'bp_rest_api_init', 'post_activities_rest_init' );
 
+/**
+ * Formats the Activités de publication activity action string.
+ *
+ * @since  1.0.0
+ *
+ * @param  string                      $action   The activity action string.
+ * @param  BP_Activity_Activity|object $activity The activity object.
+ * @return string                                The activity action string.
+ */
 function post_activities_format_activity_action( $action, $activity ) {
 	$user_link = bp_core_get_userlink( $activity->user_id );
 
-	return sprintf( __( '%s a partagé une activité de publication.', 'activites-d-article' ), $user_link );
+	return sprintf( __( '%s a partagé une activité de publication.', 'activites-de-publication' ), $user_link );
 }
 
 /**
- * Register activity action.
+ * Registers the Activités de publication activity action.
  *
- * @since 1.0.0
+ * @since  1.0.0
  */
 function post_activities_register_activity_type() {
 	bp_activity_set_action(
 		buddypress()->activity->id,
 		'publication_activity',
-		__( 'Nouvelle activité d\'article', 'activites-d-article' ),
+		__( 'Nouvelle activité d\'article', 'activites-de-publication' ),
 		'post_activities_format_activity_action',
-		__( 'Activités d\'article', 'activites-d-article' ),
+		__( 'Activités d\'article', 'activites-de-publication' ),
 		array( 'activity', 'member' )
 	);
 }
 add_action( 'bp_register_activity_actions', 'post_activities_register_activity_type' );
 
+/**
+ * Makes sure it's possible to post an Activité de publication from the BP Rest API.
+ *
+ * As the BP Rest API uses the `bp_activity_post_update()` function it is not possible to
+ * send the extra attributes we need to type an Activité de publication.
+ *
+ * @todo   Open a ticket about this on https://github.com/buddypress/bp-rest
+ *
+ * @since  1.0.0
+ *
+ * @param  array $args The activity arguments to create an entry.
+ * @return array       Unchanged or the Activité de publication arguments to create an entry.
+ */
 function post_activities_new_activity_args( $args = array() ) {
 	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
 		if ( ! isset( $_POST['type'] ) || 'publication_activity' !== $_POST['type'] ) {
@@ -194,6 +235,17 @@ function post_activities_get_activity_args( $args = array() ) {
 }
 add_filter( 'bp_after_activity_get_parse_args', 'post_activities_get_activity_args', 10, 1 );
 
+/**
+ * Gets the Activity edit link used into the WordPress Administration.
+ *
+ * NB: This is used to be consistent with how WordPress let moderators edit the post
+ * types comments.
+ *
+ * @since  1.0.0
+ *
+ * @param  integer $id The activity id.
+ * @return string      The url to edit the activity from the WordPress Administration.
+ */
 function post_activities_get_activity_edit_link( $id = 0 ) {
 	if ( ! $id ) {
 		return '';
@@ -209,7 +261,9 @@ function post_activities_get_activity_edit_link( $id = 0 ) {
 /**
  * The BP Rest Activity Controller only returns raw values, we need to render the content.
  *
- * @since 1.0.0
+ * @todo   Open a ticket about this on https://github.com/buddypress/bp-rest
+ *
+ * @since  1.0.0
  *
  * @param  WP_REST_Response $response The BP Rest response.
  * @return WP_REST_Response           The "rendered" BP Rest response.
@@ -229,7 +283,7 @@ function post_activities_prepare_bp_activity_value( WP_REST_Response $response )
 		// Add needed meta data
 		$timestamp = strtotime( $response->data['date'] );
 		$response->data['human_date'] = sprintf(
-			__( '%1$s à %2$s', 'activites-d-article' ),
+			__( '%1$s à %2$s', 'activites-de-publication' ),
 			date_i18n( get_option( 'date_format' ), $timestamp ),
 			date_i18n( get_option( 'time_format' ), $timestamp )
 		);
@@ -244,13 +298,15 @@ function post_activities_prepare_bp_activity_value( WP_REST_Response $response )
 add_filter( 'rest_prepare_buddypress_activity_value', 'post_activities_prepare_bp_activity_value', 10, 1 );
 
 /**
- * Add the number of activities and pages into the corresponding Request headers.
+ * Adds the number of activities and pages into the corresponding Request headers.
  *
- * @since 1.0.0
+ * @todo   Open a ticket about this on https://github.com/buddypress/bp-rest
  *
- * @param array            $activities The Result of the activity query.
- * @param WP_REST_Response $response   The BP Rest response.
- * @param WP_REST_Request  $request    The BP Rest request.
+ * @since  1.0.0
+ *
+ * @param  array            $activities The Result of the activity query.
+ * @param  WP_REST_Response $response   The BP Rest response.
+ * @param  WP_REST_Request  $request    The BP Rest request.
  */
 function post_activities_get_bp_activities( $activities = array(), WP_REST_Response $response, WP_REST_Request $request ) {
 	if ( ! isset( $activities['activities'] ) || ! isset( $activities['total'] ) ) {
@@ -272,6 +328,11 @@ function post_activities_get_bp_activities( $activities = array(), WP_REST_Respo
 }
 add_action( 'rest_activity_get_items', 'post_activities_get_bp_activities', 10, 3 );
 
+/**
+ * Registers needed JavaScript for the front end.
+ *
+ * @since  1.0.0
+ */
 function post_activities_front_register_scripts() {
 	if ( ! isset( wp_scripts()->registered['bp-nouveau-activity-post-form'] ) ) {
 		$js_base_url = trailingslashit( buddypress()->theme_compat->packages['nouveau']->__get( 'url' ) );
@@ -306,10 +367,29 @@ function post_activities_front_register_scripts() {
 }
 add_action( 'bp_enqueue_scripts', 'post_activities_front_register_scripts', 4 );
 
+/**
+ * Adds our templates directory to the BuddyPress templates stack.
+ *
+ * @since  1.0.0
+ *
+ * @param  array $stack The BuddyPress templates stack.
+ * @return array $stack The BuddyPress templates stack.
+ */
 function post_activities_get_template_stack( $stack = array() ) {
 	return array_merge( $stack, array( post_activities_bp_templates_dir() ) );
 }
 
+/**
+ * Locates template assets for Activités de publication.
+ *
+ * NB: This is used to ease users CSS overrides. They simply need to add a file named
+ * activites-de-publication into a /buddypress/css/ sub-folder of their theme.
+ *
+ * @since  1.0.0
+ *
+ * @param  string $asset The asset to locate.
+ * @return array         URI and Path of the located asset.
+ */
 function post_activities_locate_bp_template_asset( $asset = '' ) {
 	add_filter( 'bp_get_theme_compat_dir', 'post_activities_bp_templates_dir' );
 	add_filter( 'bp_get_theme_compat_url', 'post_activities_bp_templates_url' );
@@ -322,6 +402,11 @@ function post_activities_locate_bp_template_asset( $asset = '' ) {
 	return $located;
 }
 
+/**
+ * Adds needed JavaScript to the loading queue.
+ *
+ * @since  1.0.0
+ */
 function post_activities_front_enqueue_scripts() {
 	if ( ! is_singular() ) {
 		return;
@@ -376,13 +461,13 @@ function post_activities_front_enqueue_scripts() {
 
 		'mustLogIn'         => sprintf(
 			/* translators: %s: login URL */
-			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des conversations.', 'activites-d-article' ),
+			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des conversations.', 'activites-de-publication' ),
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
 		),
-		'publishLabel'         => __( 'Publier', 'activites-d-article' ),
-		'textareaPlaceholder'  => __( 'Participez aux conversations !', 'activites-d-article' ),
-		'loadingConversations' => __( 'Merci de patienter pendant le chargement des conversations.', 'activites-d-article' ),
-		'noConversations'      => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-d-article' ),
+		'publishLabel'         => __( 'Publier', 'activites-de-publication' ),
+		'textareaPlaceholder'  => __( 'Participez aux conversations !', 'activites-de-publication' ),
+		'loadingConversations' => __( 'Merci de patienter pendant le chargement des conversations.', 'activites-de-publication' ),
+		'noConversations'      => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-de-publication' ),
 	) );
 
 	$activity_params = array(
@@ -405,7 +490,7 @@ function post_activities_front_enqueue_scripts() {
 			'avatar_height' => $height,
 			'user_domain'   => bp_loggedin_user_domain(),
 			'avatar_alt'    => sprintf(
-				/* translators: %s = member name */
+				/* translators: %s = member name - already translated for BuddyPress */
 				__( 'Profile photo of %s', 'buddypress' ),
 				bp_get_loggedin_user_fullname()
 			),
@@ -418,19 +503,33 @@ function post_activities_front_enqueue_scripts() {
 		'activity' => array(
 			'params' => $activity_params,
 			'strings' => array(
+				/* translators: %s = member first name - already translated for BuddyPress */
 				'whatsnewPlaceholder' => sprintf( __( "What's new, %s?", 'buddypress' ), bp_get_user_firstname( bp_get_loggedin_user_fullname() ) ),
+				/* translators: already translated for BuddyPress */
 				'whatsnewLabel'       => __( 'Post what\'s new', 'buddypress' ),
+				/* translators: already translated for BuddyPress */
 				'whatsnewpostinLabel' => __( 'Post in', 'buddypress' ),
+				/* translators: already translated for BuddyPress */
 				'postUpdateButton'    => __( 'Post Update', 'buddypress' ),
+				/* translators: already translated for BuddyPress */
 				'cancelButton'        => __( 'Cancel', 'buddypress' ),
 			)
 		),
 	) );
 
-	add_filter( 'the_content', 'post_activities_js_templates' );
+	// 1000 seems a later enough priority.
+	add_filter( 'the_content', 'post_activities_js_templates', 1000 );
 }
 add_action( 'bp_enqueue_scripts', 'post_activities_front_enqueue_scripts', 14 );
 
+/**
+ * Catches Templates to inject it at the end of the content.
+ *
+ * @since  1.0.0
+ *
+ * @param  string $content The Post type content.
+ * @return string          The Post type content.
+ */
 function post_activities_js_templates( $content = '' ) {
 	$path = trailingslashit( buddypress()->theme_compat->packages['nouveau']->__get( 'dir' ) );
 
@@ -450,13 +549,21 @@ function post_activities_js_templates( $content = '' ) {
 	$templates = ob_get_clean();
 
 	// Remove temporary overrides.
-	remove_filter( 'the_content', 'post_activities_js_templates' );
+	remove_filter( 'the_content', 'post_activities_js_templates', 1000 );
 	remove_filter( 'bp_get_template_stack', 'post_activities_get_template_stack' );
 
 	// Append the templates to the Post content.
 	return $content . $templates;
 }
 
+/**
+ * Gets the activity id.
+ *
+ * @since  1.0.0
+ *
+ * @param  BP_Activity_Activity|object $activity The activity object.
+ * @return integer                               The activity id.
+ */
 function post_activities_get_activity_id( $activity = null ) {
 	$id = '';
 
@@ -473,6 +580,14 @@ function post_activities_get_activity_id( $activity = null ) {
 	return (int) $id;
 }
 
+/**
+ * Gets the activity type.
+ *
+ * @since  1.0.0
+ *
+ * @param  BP_Activity_Activity|object $activity The activity object.
+ * @return string                                The activity type.
+ */
 function post_activities_get_activity_type( $activity = null ) {
 	$type = '';
 
@@ -489,6 +604,16 @@ function post_activities_get_activity_type( $activity = null ) {
 	return $type;
 }
 
+/**
+ * Overrides the BuddyPress check for the delete cap.
+ *
+ * @since  1.0.0
+ *
+ * @param  boolean                     $can_delete Wether the user can delete the activity or not.
+ * @param  BP_Activity_Activity|object $activity   The activity object.
+ * @return boolean                                 True if the user can delete the activity.
+ *                                                 False otherwise.
+ */
 function post_activities_can_delete( $can_delete = false, $activity = null ) {
 	$type = post_activities_get_activity_type( $activity );
 
@@ -500,6 +625,16 @@ function post_activities_can_delete( $can_delete = false, $activity = null ) {
 }
 add_filter( 'bp_activity_user_can_delete', 'post_activities_can_delete', 20, 2 );
 
+/**
+ * Overrides the BuddyPress check for the comment cap.
+ *
+ * @since  1.0.0
+ *
+ * @param  boolean $can_comment Wether the user can comment the activity or not.
+ * @param  string  $type        The activity type.
+ * @return boolean              True if the user can comment the activity.
+ *                              False otherwise.
+ */
 function post_activities_can_comment( $can_comment = false, $type = '' ) {
 	if ( 'publication_activity' === $type ) {
 		$can_comment = false;
@@ -509,6 +644,13 @@ function post_activities_can_comment( $can_comment = false, $type = '' ) {
 }
 add_filter( 'bp_activity_can_comment', 'post_activities_can_comment', 10, 2 );
 
+/**
+ * Gets the URL of the BuddyPress delete link.
+ *
+ * @since  1.0.0
+ *
+ * @return string The URL of the BuddyPress delete link.
+ */
 function post_activities_get_delete_activity_url() {
 	global $activities_template;
 
@@ -525,6 +667,16 @@ function post_activities_get_delete_activity_url() {
 	return $delete_url;
 }
 
+/**
+ * Overrides the link to delete the activity.
+ *
+ * @since  1.0.0
+ *
+ * @param  string                      $delete_link The activity delete link.
+ * @param  BP_Activity_Activity|object $activity    The activity object.
+ * @return string                                   The URL to delete the activity
+ *                                                  from the WordPress Administration.
+ */
 function post_activities_moderate_link( $delete_link = '', $activity = null ) {
 	if ( 'nouveau' === bp_get_theme_compat_id() ) {
 		return $delete_link;
@@ -544,13 +696,22 @@ function post_activities_moderate_link( $delete_link = '', $activity = null ) {
 		'delete-activity'
 	), array(
 		esc_url( post_activities_get_activity_edit_link( $id ) ),
-		__( 'Modifier', 'activites-d-article' ),
+		__( 'Modifier', 'activites-de-publication' ),
 		'',
 		'edit-activity',
 	), $delete_link );
 }
 add_filter( 'bp_get_activity_delete_link', 'post_activities_moderate_link', 10, 1 );
 
+/**
+ * Overrides BP Nouveau action buttons for the Activités de publication.
+ *
+ * @since  1.0.0
+ *
+ * @param  array   $buttons The list of buttons passed by reference.
+ * @param  integer $id      The activity id these buttons relate to.
+ * @return array            The list of buttons.
+ */
 function post_activities_get_nouveau_activity_entry_buttons( &$buttons = array(), $id = 0 ) {
 	if ( 'publication_activity' !== bp_get_activity_type() ) {
 		return $buttons;
@@ -568,7 +729,7 @@ function post_activities_get_nouveau_activity_entry_buttons( &$buttons = array()
 			esc_url( post_activities_get_activity_edit_link( $id ) ),
 			'',
 			'edit-activity',
-			__( 'Modifier', 'activites-d-article' )
+			__( 'Modifier', 'activites-de-publication' )
 		), $buttons['activity_delete'] );
 	}
 
@@ -576,6 +737,16 @@ function post_activities_get_nouveau_activity_entry_buttons( &$buttons = array()
 }
 add_filter( 'bp_nouveau_return_activity_entry_buttons', 'post_activities_get_nouveau_activity_entry_buttons', 10, 2 );
 
+/**
+ * Overrides the BuddyPress check for the favorite cap.
+ *
+ * @since  1.0.0
+ *
+ * @param  boolean                     $can_favorite Wether the user can favorite the activity or not.
+ * @param  BP_Activity_Activity|object $activity     The activity object.
+ * @return boolean                                   True if the user can favorite the activity.
+ *                                                   False otherwise.
+ */
 function post_activities_can_favorite( $can_favorite = true, $activity = null ) {
 	if ( 'nouveau' === bp_get_theme_compat_id() ) {
 		return $can_favorite;
@@ -591,6 +762,15 @@ function post_activities_can_favorite( $can_favorite = true, $activity = null ) 
 }
 add_filter( 'bp_activity_can_favorite', 'post_activities_can_favorite', 20, 1 );
 
+/**
+ * Overrides the activity permalink for Activités de publication.
+ *
+ * @since  1.0.0
+ *
+ * @param  string                      $link     The activity permalink.
+ * @param  BP_Activity_Activity|object $activity The activity object passed by reference.
+ * @return string                                The activity permalink.
+ */
 function post_activities_get_activity_permalink( $link = '', &$activity = null ) {
 	if ( isset( $activity->type ) && 'publication_activity' === $activity->type && is_buddypress() ) {
 		$link = $activity->primary_link;

@@ -1,11 +1,5 @@
 /**
  * Activités de publication front script.
- *
- * @todo {
- *  - Improve inline comments,
- *  - Finish the renaming from activités d'article to activités de publication.
- *  - display_comments ?
- * }
  */
 
 ( function( $, _, bp, wp ) {
@@ -35,14 +29,14 @@
 		);
 	}
 
-	// Container for the list of Activities for this Post.
+	// Container for the list of Activités de publication for this Post.
 	$( '#bp-nouveau-activity-form' ).after(
 		$( '<div></div>' ).prop( 'id', 'activites-de-publication-list' )
 		                  .addClass( containerClass )
 	);
 
 	/**
-	 * Model for the Activité de publication item.
+	 * Model for the Activités de publication item.
 	 */
 	bp.Models.activite = Backbone.Model.extend( {
 		defaults: {
@@ -229,12 +223,18 @@
 		}
 	} );
 
+	/**
+	 * Activités de publication Loop's load more link.
+	 */
 	bp.Views.olderActivites = bp.View.extend( {
 		tagName  : 'li',
 		className: 'load-more',
 		template : bp.template( 'plus-d-activites-de-publication' )
 	} );
 
+	/**
+	 * Navigation to toggle between WordPress comments / BuddyPress activities.
+	 */
 	bp.Views.navToggle = bp.View.extend( {
 		tagName  : 'ul',
 		template : bp.template( 'activites-de-publication-nav' ),
@@ -261,6 +261,9 @@
 		}
 	} );
 
+	/**
+	 * Activités de publication loop.
+	 */
 	bp.Views.Activites = bp.View.extend( {
 		tagName  : 'ol',
 		id       : 'activites-liste',
@@ -345,6 +348,9 @@
 		}
 	} );
 
+	/**
+	 * Activités de publication entry.
+	 */
 	bp.Views.Activite = bp.View.extend( {
 		tagName  : 'li',
 		template : bp.template( 'activites-de-publication' ),
@@ -361,7 +367,7 @@
 		BP_Nouveau.activity.strings.postUpdateButton = _activitesDePublicationSettings.publishLabel;
 	}
 
-	// Fetch the activities.
+	// Fetch the Activités de publication.
 	bp.ActivitesDePublications.activites.fetch( {
 		data: {
 			page: 1,
@@ -381,11 +387,12 @@
 		}
 	} );
 
+	// Inject the Navigation if needed.
 	if ( $( '#activites-de-publication-nav' ).length ) {
 		var navToggle = new bp.Views.navToggle().inject( '#activites-de-publication-nav' );
 	}
 
-	// Inject the Activités main view.
+	// Inject the Activités de publication main view.
 	var activitesView = new bp.Views.Activites( {
 		collection: bp.ActivitesDePublications.activites
 	} ).inject( '#activites-de-publication-list' );

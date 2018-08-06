@@ -2,7 +2,7 @@
 /**
  * Post Activities admin functions.
  *
- * @package Activites_d_article\inc
+ * @package Activites_de_Publication\inc
  *
  * @since  1.0.0
  */
@@ -10,6 +10,11 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Registers the needed JavaScript for the modern editor (Gutenberg).
+ *
+ * @since  1.0.0
+ */
 function post_activities_admin_register_scripts() {
 	wp_register_script(
 		'activites-d-article-modern-editor',
@@ -21,6 +26,11 @@ function post_activities_admin_register_scripts() {
 }
 add_action( 'admin_enqueue_scripts', 'post_activities_admin_register_scripts', 7 );
 
+/**
+ * Adds needed JavaScript to the loading queue.
+ *
+ * @since  1.0.0
+ */
 function post_activities_admin_enqueue_scripts() {
 	$post = get_post();
 
@@ -30,14 +40,21 @@ function post_activities_admin_enqueue_scripts() {
 
 	wp_enqueue_script( 'activites-d-article-modern-editor' );
 	wp_localize_script( 'activites-d-article-modern-editor', '_activitesDePublicationAdminSettings', array(
-		'activateLabel' => __( 'Activer les activités BuddyPress', 'activites-d-article' ),
-		'moreMenuLabel' => __( 'Activités de Publication', 'activites-d-article' ),
-		'sidebarLabel'  => __( 'Conversations', 'activites-d-article' ),
-		'settingsLabel' => __( 'Réglage', 'activites-d-article' ),
+		'activateLabel' => __( 'Activer les activités BuddyPress', 'activites-de-publication' ),
+		'moreMenuLabel' => __( 'Activités de Publication', 'activites-de-publication' ),
+		'sidebarLabel'  => __( 'Conversations', 'activites-de-publication' ),
+		'settingsLabel' => __( 'Réglage', 'activites-de-publication' ),
 	) );
 }
 add_action( 'enqueue_block_editor_assets', 'post_activities_admin_enqueue_scripts' );
 
+/**
+ * Displays a back compatibility meta box for the classic editor.
+ *
+ * @since  1.0.0
+ *
+ * @param WP_Post|object $post The post object being edited.
+ */
 function post_activities_admin_display_metabox( $post = null ) {
 	if ( empty( $post->ID ) ) {
 		return;
@@ -52,13 +69,18 @@ function post_activities_admin_display_metabox( $post = null ) {
 		</p>
 		',
 		checked( 1, $enabled, false ),
-		esc_html__( 'Activer les activités BuddyPress', 'activites-d-article' ),
+		esc_html__( 'Activer les activités BuddyPress', 'activites-de-publication' ),
 		$enabled
 	);
 
 	wp_nonce_field( 'post_activities_admin_metabox_save', 'post_activities_admin_metabox' );
 }
 
+/**
+ * Adds a back compatibility meta box to the classic editor.
+ *
+ * @since  1.0.0
+ */
 function post_activities_admin_add_metabox() {
 	$post = get_post();
 
@@ -69,7 +91,7 @@ function post_activities_admin_add_metabox() {
 	// Add the metabox
 	add_meta_box(
 		'activites-de-publication',
-		__( 'Conversations', 'activites-d-article' ),
+		__( 'Conversations', 'activites-de-publication' ),
 		'post_activities_admin_display_metabox',
 		get_post_type( $post ),
 		'side',
@@ -80,6 +102,14 @@ function post_activities_admin_add_metabox() {
 	);
 }
 
+/**
+ * Saves the Activités de publication meta data edited from the classic editor.
+ *
+ * @since  1.0.0
+ *
+ * @param  integer $post_id The post ID being edited.
+ * @return integer          The post ID being edited.
+ */
 function post_activities_admin_save_metabox( $post_id = 0 ) {
 	// Bail if doing an autosave
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
@@ -107,6 +137,11 @@ function post_activities_admin_save_metabox( $post_id = 0 ) {
 	return $post_id;
 }
 
+/**
+ * Registers a back compatibility meta box for the classic editor.
+ *
+ * @since  1.0.0
+ */
 function post_activities_admin_register_metaboxes() {
 	$post_types = get_post_types_by_support( 'activites_de_publication' );
 
@@ -160,6 +195,6 @@ function post_activities_admin_add_inline_script() {
 									)
 			);
 		} )( jQuery );
-	', str_replace( '&amp;', '&', esc_url_raw( $delete_url ) ), esc_html__( 'Supprimer définitivement', 'activites-d-article' ) ) );
+	', str_replace( '&amp;', '&', esc_url_raw( $delete_url ) ), esc_html__( 'Supprimer définitivement', 'activites-de-publication' ) ) );
 }
 add_action( 'bp_activity_admin_enqueue_scripts', 'post_activities_admin_add_inline_script' );

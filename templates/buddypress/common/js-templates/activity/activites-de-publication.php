@@ -2,6 +2,8 @@
 /**
  * Publication Activity entry JS Template
  *
+ * @package Activites_de_Publication\templates\buddypress\common\js-templates\activity
+ *
  * @since 1.0.0
  * @version 1.0.0
  */
@@ -9,12 +11,12 @@
 <script type="text/html" id="tmpl-activites-de-publication-nav">
 	<li class="nav-item current">
 		<a href="#comments" data-type="comments">
-			<?php esc_html_e( 'Commentaires', 'activites-d-article' ); ?>
+			<?php esc_html_e( 'Commentaires', 'activites-de-publication' ); ?>
 		</a>
 	</li>
 	<li class="nav-item">
 		<a href="#conversations" data-type="conversations">
-			<?php esc_html_e( 'Conversations', 'activites-d-article' ); ?>
+			<?php esc_html_e( 'Conversations', 'activites-de-publication' ); ?>
 		</a>
 	</li>
 </script>
@@ -32,7 +34,7 @@
 				</a>
 				<# if ( data.edit_link ) { #>
 					<span class="edit-link">
-						<a class="comment-edit-link" href="{{data.edit_link}}"><?php esc_html_e( 'Modifier', 'activites-d-article' ); ?></a>
+						<a class="comment-edit-link" href="{{data.edit_link}}"><?php esc_html_e( 'Modifier', 'activites-de-publication' ); ?></a>
 					</span>
 				<# } #>
 			</div>
@@ -44,5 +46,5 @@
 </script>
 
 <script type="text/html" id="tmpl-plus-d-activites-de-publication">
-	<a href="#" data-next-page="{{{data.nextPage}}}"><?php esc_html_e( 'Charger plus de conversations', 'activites-d-article' ); ?></a>
+	<a href="#" data-next-page="{{{data.nextPage}}}"><?php esc_html_e( 'Charger plus de conversations', 'activites-de-publication' ); ?></a>
 </script>
