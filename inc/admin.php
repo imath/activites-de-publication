@@ -205,3 +205,22 @@ function post_activities_admin_add_inline_script() {
 	) );
 }
 add_action( 'bp_activity_admin_enqueue_scripts', 'post_activities_admin_add_inline_script' );
+
+/**
+ * Overrides the BuddyPress check for the comment cap in the Activity List Table.
+ *
+ * @since  1.0.0
+ *
+ * @param  boolean $can_comment Wether the user can comment the activity or not.
+ * @param  array  $activity     An associative array having Activity object properties as keys.
+ * @return boolean              True if the user can comment the activity.
+ *                              False otherwise.
+ */
+function post_activities_admin_can_comment( $can_comment = false, $activity = array() ) {
+	if ( isset( $activity['type'] ) && 'publication_activity' === $activity['type'] ) {
+		$can_comment = false;
+	}
+
+	return $can_comment;
+}
+add_filter( 'bp_activity_list_table_can_comment', 'post_activities_admin_can_comment', 10, 2 );
