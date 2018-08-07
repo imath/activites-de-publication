@@ -563,6 +563,49 @@ function post_activities_js_templates( $content = '' ) {
 }
 
 /**
+ * Use a specific activity/entry template for the Activités de Publication activities.
+ *
+ * NB: This is used to make sure there are no other button actions than the edit one.
+ *
+ * @since  1.0.0
+ *
+ * @param  array  $templates The list of possible templates for the slug.
+ * @param  string $slug      The slug of the requested template.
+ * @return array             The list of possible templates for the slug.
+ */
+function post_activities_get_activity_entry_template_part( $templates = array(), $slug = '' ) {
+	if ( 'activity/entry' !== $slug || ! isset( $GLOBALS['activities_template']->activity->type ) || 'publication_activity' !== $GLOBALS['activities_template']->activity->type ) {
+		return $templates;
+	}
+
+	// Temporarly overrides the BuddyPress Template Stack.
+	add_filter( 'bp_get_template_stack', 'post_activities_get_template_stack' );
+
+	// Use a specific template for the active template pack
+	$theme_compat_id = bp_get_theme_compat_id();
+	if ( 'nouveau' !== $theme_compat_id && 'legacy' !== $theme_compat_id ) {
+		$theme_compat_id = 'legacy';
+	}
+
+	return array_merge( array( "activity/entry-{$theme_compat_id}.php" ), $templates );
+}
+add_filter( 'bp_get_template_part', 'post_activities_get_activity_entry_template_part', 10, 2 );
+
+/**
+ * Removes the temporary filter used to override the activity/entry template.
+ *
+ * @since  1.0.0
+ *
+ * @param  string $located The located template.
+ */
+function post_activities_located_entry_template_part( $located = '' ) {
+	if ( false !== strpos( $located, 'activity/entry' ) ) {
+		remove_filter( 'bp_get_template_stack', 'post_activities_get_template_stack' );
+	}
+}
+add_action( 'bp_locate_template', 'post_activities_located_entry_template_part', 10, 1 );
+
+/**
  * Gets the activity id.
  *
  * @since  1.0.0
