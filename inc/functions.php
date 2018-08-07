@@ -284,11 +284,29 @@ function post_activities_get_activity_edit_link( $id = 0 ) {
  */
 function post_activities_prepare_bp_activity_value( WP_REST_Response $response ) {
 	if ( isset( $response->data['content'] ) ) {
+		$reset_activities_template = null;
+
+		if ( isset( $GLOBALS['activities_template'] ) ) {
+			$reset_activities_template = $GLOBALS['activities_template'];
+		}
+
+		// Temporarly overrides the `activities_template` global.
+		$GLOBALS['activities_template'] = new stdClass;
+		$GLOBALS['activities_template']->activity = (object) array( 'id' => $response->data['id'] );
+
+		// Make sure the embed filters and actions are triggered.
+		bp_activity_embed();
+
+		// Do not truncate activities.
 		add_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
 
 		$response->data['content'] = apply_filters( 'bp_get_activity_content_body', $response->data['content'] );
 
+		// Restore the filter to truncate activities.
 		remove_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
+
+		// Restore the `activities_template` global.
+		$GLOBALS['activities_template'] = $reset_activities_template;
 
 		// Add needed data for the user.
 		$response->data['user_name'] = bp_core_get_user_displayname( $response->data['user'] );
