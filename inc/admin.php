@@ -184,17 +184,24 @@ function post_activities_admin_add_inline_script() {
 		'action' => 'delete',
 	), bp_get_admin_url( 'admin.php' ) ), "spam-activity_{$aid}" );
 
-	wp_add_inline_script( 'bp_activity_admin_js', sprintf( '
-		( function( $ ) {
+	wp_add_inline_script( 'bp_activity_admin_js', sprintf(
+		'( function( $ ) {
 			$( \'#publishing-action\' ).before(
 				$( \'<div></div>\' ).prop( \'id\', \'delete-action\' )
 				                    .html(
-										$( \'<a></a>\' ).addClass( \'submitdelete deletion\' )
+										$( \'<a></a>\' ).addClass( \'submitdelete deletion confirm\' )
 														.prop( \'href\', \'%1$s\' )
 														.html( \'%2$s\' )
 									)
 			);
-		} )( jQuery );
-	', str_replace( '&amp;', '&', esc_url_raw( $delete_url ) ), esc_html__( 'Supprimer définitivement', 'activites-de-publication' ) ) );
+
+			$( \'#major-publishing-actions\' ).on( \'click\', \'.confirm\', function() {
+				return confirm( \'%3$s\' );
+			} );
+		} )( jQuery );',
+		str_replace( '&amp;', '&', esc_url_raw( $delete_url ) ),
+		esc_html__( 'Supprimer définitivement', 'activites-de-publication' ),
+		esc_html__( 'Confirmez votre demande.', 'activites-de-publication' )
+	) );
 }
 add_action( 'bp_activity_admin_enqueue_scripts', 'post_activities_admin_add_inline_script' );
