@@ -2,6 +2,8 @@
  * Activités de publication front script.
  */
 
+/* global _activitesDePublicationSettings, BP_Nouveau */
+
 ( function( $, _, bp, wp ) {
 
 	if ( 'undefined' === typeof _activitesDePublicationSettings ) {
@@ -80,7 +82,7 @@
 			data: {
 				type : 'publication_activity',
 				'primary_id' : _activitesDePublicationSettings.primaryID,
-				'secondary_id' : _activitesDePublicationSettings.secondaryID,
+				'secondary_id' : _activitesDePublicationSettings.secondaryID
 			},
 			dataType: 'json'
 		},
@@ -172,7 +174,7 @@
 					type: 'publication_activity',
 					'item_id' : _activitesDePublicationSettings.primaryID,
 					'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
-					user: this.model.get( 'user_id' ),
+					user: this.model.get( 'user_id' )
 				} ), {
 					success: function( model, response ) {
 						// Get the first activity and add it to the collection.
@@ -244,7 +246,7 @@
 		template : bp.template( 'activites-de-publication-nav' ),
 
 		events: {
-			'click .nav-item a'  : 'toggleNav',
+			'click .nav-item a'  : 'toggleNav'
 		},
 
 		toggleNav: function( event ) {
@@ -274,7 +276,7 @@
 		className: 'comment-list',
 
 		events: {
-			'click .load-more a'  : 'fetchMoreActivities',
+			'click .load-more a'  : 'fetchMoreActivities'
 		},
 
 		initialize: function() {
@@ -346,7 +348,7 @@
 					data: {
 						page: nextPage,
 						per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
-					},
+					}
 				} );
 			}
 		}
@@ -364,7 +366,7 @@
 	// Globalize the Collection.
 	bp.ActivitesDePublications = {
 		activites: new bp.Collections.activites()
-	}
+	};
 
 	// BP String overrides
 	if ( ! _.isUndefined( BP_Nouveau.activity.strings.postUpdateButton ) ) {
@@ -382,23 +384,29 @@
 		},
 		error: function( collection, response ) {
 			if ( response.responseJSON && 'rest_authorization_required' === response.responseJSON.code ) {
-				// Inject the login feedback.
 				var feedback = new bp.Views.activityFeedback( {
 					value: _activitesDePublicationSettings.mustLogIn,
 					type: 'info'
-				} ).inject( '#activites-de-publication-list' );
+				} );
+
+				// Inject the login feedback.
+				feedback.inject( '#activites-de-publication-list' );
 			}
 		}
 	} );
 
-	// Inject the Navigation if needed.
 	if ( $( '#activites-de-publication-nav' ).length ) {
-		var navToggle = new bp.Views.navToggle().inject( '#activites-de-publication-nav' );
+		var navToggle = new bp.Views.navToggle();
+
+		// Inject the Navigation if needed.
+		navToggle.inject( '#activites-de-publication-nav' );
 	}
 
-	// Inject the Activités de publication main view.
 	var activitesView = new bp.Views.Activites( {
 		collection: bp.ActivitesDePublications.activites
-	} ).inject( '#activites-de-publication-list' );
+	} );
+
+	// Inject the Activités de publication main view.
+	activitesView.inject( '#activites-de-publication-list' );
 
 } )( jQuery, _, window.bp || {}, window.wp || {} );

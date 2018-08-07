@@ -79,6 +79,20 @@ function post_activities_min_suffix() {
 }
 
 /**
+ * Load translations.
+ *
+ * @since 1.0.0
+ */
+function post_activities_load_textdomain() {
+	load_plugin_textdomain(
+		'activites-de-publication',
+		false,
+		trailingslashit( basename( post_activities()->dir ) ) . 'languages'
+	);
+}
+add_action( 'bp_include', 'post_activities_load_textdomain', 10 );
+
+/**
  * Checks whether a given post type entry supports Activités de publication.
  *
  * @since  1.0.0
@@ -740,6 +754,7 @@ function post_activities_moderate_link( $delete_link = '', $activity = null ) {
 
 	return str_replace( array(
 		post_activities_get_delete_activity_url(),
+		/* translators: already translated for BuddyPress */
 		__( 'Delete', 'buddypress' ),
 		' confirm',
 		'delete-activity'

@@ -2,6 +2,8 @@
  * Post Activities editor sidebar.
  */
 
+/* global _activitesDePublicationAdminSettings */
+
 ( function( wp ) {
 	if ( 'undefined' === typeof _activitesDePublicationAdminSettings ) {
 		return;
@@ -16,7 +18,7 @@
 		return el( FormToggle, {
 			key: 'toggle',
 			checked: props.checked,
-			onChange: function( event ) {
+			onChange: function() {
 				props.onChangeActivityToggle();
 			},
 			id: 'toggle-activity'
@@ -66,7 +68,7 @@
 			el(
 				PluginSidebarMoreMenuItem,
 				{
-					target: 'activites-de-publication/conversation',
+					target: 'activites-de-publication/conversation'
 				},
 				_activitesDePublicationAdminSettings.moreMenuLabel
 			),
@@ -74,7 +76,7 @@
 				PluginSidebar,
 				{
 					name: 'activites-de-publication/conversation',
-					title: _activitesDePublicationAdminSettings.sidebarLabel,
+					title: _activitesDePublicationAdminSettings.sidebarLabel
 				},
 				el(
 					PanelBody,
@@ -89,7 +91,7 @@
 
 	registerPlugin( 'activites-de-publication', {
 		icon: 'buddicons-activity',
-		render: activitesDarticleSidebar,
+		render: activitesDarticleSidebar
 	} );
 
 } )( window.wp || {} );
