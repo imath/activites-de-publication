@@ -9,7 +9,7 @@
 		return;
 	}
 
-	var el = wp.element.createElement, compose = wp.element.compose, Fragment = wp.element.Fragment,
+	var el = wp.element.createElement, compose = wp.element.compose || wp.compose.compose, Fragment = wp.element.Fragment,
 	    PanelBody = wp.components.PanelBody, PanelRow = wp.components.PanelRow, FormToggle = wp.components.FormToggle,
 	    PluginSidebar = wp.editPost.PluginSidebar, PluginSidebarMoreMenuItem = wp.editPost.PluginSidebarMoreMenuItem,
 	    registerPlugin = wp.plugins.registerPlugin, postData = wp.data;
