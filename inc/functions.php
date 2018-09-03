@@ -269,6 +269,7 @@ function post_activities_get_activity_edit_link( $id = 0 ) {
  *
  * @since  1.0.0
  * @since  1.0.2 Sets Response extra data.
+ *               Edit the filtered hook in favor of `rest_activity_prepare_value`.
  *
  * @param  WP_REST_Response $response The BP Rest response.
  * @return WP_REST_Response           The "rendered" BP Rest response.
@@ -294,7 +295,7 @@ function post_activities_prepare_bp_activity_value( WP_REST_Response $response )
 
 	return $response;
 }
-add_filter( 'rest_prepare_buddypress_activity_value', 'post_activities_prepare_bp_activity_value', 10, 1 );
+add_filter( 'rest_activity_prepare_value', 'post_activities_prepare_bp_activity_value', 10, 1 );
 
 /**
  * Adds the number of activities and pages into the corresponding Request headers.
