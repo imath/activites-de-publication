@@ -192,32 +192,22 @@ function post_activities_register_activity_type() {
 add_action( 'bp_register_activity_actions', 'post_activities_register_activity_type' );
 
 /**
- * Makes sure it's possible to post an Activité de publication from the BP Rest API.
- *
- * As the BP Rest API uses the `bp_activity_post_update()` function it is not possible to
- * send the extra attributes we need to type an Activité de publication.
- *
- * @todo   Open a ticket about this on https://github.com/buddypress/bp-rest
+ * Sets the primary link to be the Post Type permalink.
  *
  * @since  1.0.0
+ * @since  1.0.2 Sets the primary link to be the Post Type permalink.
  *
  * @param  array $args The activity arguments to create an entry.
  * @return array       Unchanged or the Activité de publication arguments to create an entry.
  */
 function post_activities_new_activity_args( $args = array() ) {
 	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-		if ( ! isset( $_POST['type'] ) || 'publication_activity' !== $_POST['type'] ) {
+		if ( ! isset( $_POST['type'] ) || 'publication_activity' !== $_POST['type'] || ! isset( $_POST['secondary_item_id'] ) ) {
 			return $args;
 		}
 
-		$postData = wp_parse_args( $_POST, array(
-			'item_id'           => 0,
-			'secondary_item_id' => 0,
-			'hide_sitewide'     => false,
-		) );
-
-		$args = array_merge( $args, $postData, array(
-			'primary_link' => get_permalink( (int) $postData['secondary_item_id'] ),
+		$args = array_merge( $args, array(
+			'primary_link' => get_permalink( (int) $_POST['secondary_item_id'] ),
 		) );
 	}
 
@@ -231,6 +221,9 @@ add_filter( 'bp_after_activity_add_parse_args', 'post_activities_new_activity_ar
  * 1. The `show_hidden` argument is missing in create_item().
  * 2. It should be possible to request for show_hidden in get_items().
  *
+ * @since  1.0.0
+ * @deprecated 1.0.2
+ *
  * @param  array  $args The arguments for bp_activity_get().
  * @return array        The arguments for bp_activity_get().
  */
@@ -241,13 +234,12 @@ function post_activities_get_activity_args( $args = array() ) {
 		}
 
 		if ( isset( $_REQUEST['hide_sitewide'] ) && true === (bool) $_REQUEST['hide_sitewide'] ) {
-			$args['show_hidden'] = true;
+			_deprecated_function( __FUNCTION__, '1.0.2' );
 		}
 	}
 
 	return $args;
 }
-add_filter( 'bp_after_activity_get_parse_args', 'post_activities_get_activity_args', 10, 1 );
 
 /**
  * Gets the Activity edit link used into the WordPress Administration.
@@ -273,41 +265,16 @@ function post_activities_get_activity_edit_link( $id = 0 ) {
 }
 
 /**
- * The BP Rest Activity Controller only returns raw values, we need to render the content.
- *
- * @todo   Open a ticket about this on https://github.com/buddypress/bp-rest
+ * Sets Response extra data.
  *
  * @since  1.0.0
+ * @since  1.0.2 Sets Response extra data.
  *
  * @param  WP_REST_Response $response The BP Rest response.
  * @return WP_REST_Response           The "rendered" BP Rest response.
  */
 function post_activities_prepare_bp_activity_value( WP_REST_Response $response ) {
 	if ( isset( $response->data['content'] ) ) {
-		$reset_activities_template = null;
-
-		if ( isset( $GLOBALS['activities_template'] ) ) {
-			$reset_activities_template = $GLOBALS['activities_template'];
-		}
-
-		// Temporarly overrides the `activities_template` global.
-		$GLOBALS['activities_template'] = new stdClass;
-		$GLOBALS['activities_template']->activity = (object) array( 'id' => $response->data['id'] );
-
-		// Make sure the embed filters and actions are triggered.
-		bp_activity_embed();
-
-		// Do not truncate activities.
-		add_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
-
-		$response->data['content'] = apply_filters( 'bp_get_activity_content_body', $response->data['content'] );
-
-		// Restore the filter to truncate activities.
-		remove_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
-
-		// Restore the `activities_template` global.
-		$GLOBALS['activities_template'] = $reset_activities_template;
-
 		// Add needed data for the user.
 		$response->data['user_name'] = bp_core_get_user_displayname( $response->data['user'] );
 		$response->data['user_link'] = apply_filters( 'bp_get_activity_user_link', bp_core_get_user_domain( $response->data['user'] ) );
@@ -332,9 +299,8 @@ add_filter( 'rest_prepare_buddypress_activity_value', 'post_activities_prepare_b
 /**
  * Adds the number of activities and pages into the corresponding Request headers.
  *
- * @todo   Open a ticket about this on https://github.com/buddypress/bp-rest
- *
  * @since  1.0.0
+ * @deprecated 1.0.2
  *
  * @param  array            $activities The Result of the activity query.
  * @param  WP_REST_Response $response   The BP Rest response.
@@ -345,20 +311,8 @@ function post_activities_get_bp_activities( $activities = array(), WP_REST_Respo
 		return;
 	}
 
-	$page             = $request->get_param( 'page' );
-	$per_page         = $request->get_param( 'per_page' );
-	$total_activities = (int) $activities['total'];
-
-	if ( ! $page || ! $per_page ) {
-		return;
-	}
-
-	$max_pages = ceil( $total_activities / (int) $per_page );
-
-	$response->header( 'X-WP-Total', (int) $total_activities );
-	$response->header( 'X-WP-TotalPages', (int) $max_pages );
+	_deprecated_function( __FUNCTION__, '1.0.2' );
 }
-add_action( 'rest_activity_get_items', 'post_activities_get_bp_activities', 10, 3 );
 
 /**
  * Registers needed JavaScript for the front end.

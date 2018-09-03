@@ -62,7 +62,7 @@
 			_.extend( options.data, model.attributes );
 
 			if ( 1 === parseInt( _activitesDePublicationSettings.hideSitewide, 10 ) ) {
-				options.data.hide_sitewide = 1;
+				options.data.hidden = 1;
 			}
 
 			if ( 'create' === method || 'update' === method ) {
@@ -96,7 +96,7 @@
 			_.extend( options.data, data );
 
 			if ( 1 === parseInt( _activitesDePublicationSettings.hideSitewide, 10 ) ) {
-				options.data.hide_sitewide = 1;
+				options.data.hidden = 1;
 			}
 
 			if ( 'read' === method ) {
@@ -172,8 +172,8 @@
 			activite.save(
 				_.extend( this.model.attributes, {
 					type: 'publication_activity',
-					'item_id' : _activitesDePublicationSettings.primaryID,
-					'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
+					'prime_association' : _activitesDePublicationSettings.primaryID,
+					'secondary_association' : _activitesDePublicationSettings.secondaryID,
 					user: this.model.get( 'user_id' )
 				} ), {
 					success: function( model, response ) {
