@@ -40,7 +40,7 @@
 			</div>
 		</footer>
 		<div class="comment-content">
-			{{{data.content}}}
+			{{{data.content.rendered}}}
 		</div>
 	</article>
 </script>
