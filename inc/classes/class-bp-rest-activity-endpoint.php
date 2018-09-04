@@ -21,8 +21,9 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 * @since 0.1.0
 	 */
 	public function __construct() {
-		$this->namespace = 'buddypress/v1';
-		$this->rest_base = buddypress()->activity->id;
+		$this->namespace      = 'buddypress/v1';
+		$this->rest_base      = buddypress()->activity->id;
+		$this->user_favorites = array();
 	}
 
 	/**
@@ -47,7 +48,9 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			'schema' => array( $this, 'get_item_schema' ),
 		) );
 
-		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)', array(
+		$activity_endpoint = '/' . $this->rest_base . '/(?P<id>[\d]+)';
+
+		register_rest_route( $this->namespace, $activity_endpoint, array(
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_item' ),
@@ -71,6 +74,16 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			),
 			'schema' => array( $this, 'get_item_schema' ),
 		) );
+
+		// Register the favorite route.
+		register_rest_route( $this->namespace, $activity_endpoint . '/favorite', array(
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'update_favorite' ),
+				'permission_callback' => array( $this, 'update_favorite_permissions_check' ),
+			),
+			'schema' => array( $this, 'get_item_schema' ),
+		) );
 	}
 
 	/**
@@ -79,7 +92,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 * @since 0.1.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Request List of activities object data.
+	 * @return WP_REST_Response List of activities response data.
 	 */
 	public function get_items( $request ) {
 		$args = array(
@@ -114,8 +127,10 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			$args['filter']['action'] = $request['type'];
 		}
 
+		$item_id = 0;
 		if ( isset( $request['primary_id'] ) ) {
-			$args['filter']['primary_id'] = $request['primary_id'];
+			$item_id                      = $request['primary_id'];
+			$args['filter']['primary_id'] = $item_id;
 		}
 
 		if ( isset( $request['secondary_id'] ) ) {
@@ -126,7 +141,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			$args['count_total'] = false;
 		}
 
-		if ( $this->show_hidden( $request['component'], $request['primary_id'] ) ) {
+		if ( $this->show_hidden( $request['component'], $item_id ) ) {
 			$args['show_hidden'] = true;
 		}
 
@@ -139,7 +154,8 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			);
 		}
 
-		$retval = rest_ensure_response( $retval );
+		$response = rest_ensure_response( $retval );
+		$response = bp_rest_response_add_total_headers( $response, $activities['total'], $args['per_page'] );
 
 		/**
 		 * Fires after a list of activities is fetched via the REST API.
@@ -147,12 +163,12 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		 * @since 0.1.0
 		 *
 		 * @param object           $activities Fetched activities.
-		 * @param WP_REST_Response $retval   The response data.
-		 * @param WP_REST_Request  $request  The request sent to the API.
+		 * @param WP_REST_Response $response   The response data.
+		 * @param WP_REST_Request  $request    The request sent to the API.
 		 */
-		do_action( 'rest_activity_get_items', $activities, $retval, $request );
+		do_action( 'rest_activity_get_items', $activities, $response, $request );
 
-		return $retval;
+		return $response;
 	}
 
 	/**
@@ -199,6 +215,25 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	}
 
 	/**
+	 * Checks if the current user is logged in and set their favorites.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return boolean True if the user is logged in. False otherwise.
+	 */
+	public function get_user_permission_check() {
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+
+		// Current user favorites.
+		$user_favorites       = bp_activity_get_user_favorites( get_current_user_id() );
+		$this->user_favorites = array_filter( wp_parse_id_list( $user_favorites ) );
+
+		return true;
+	}
+
+	/**
 	 * Check if a given request has access to get information about a specific activity.
 	 *
 	 * @since 0.1.0
@@ -207,6 +242,15 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 * @return WP_Error|bool
 	 */
 	public function get_item_permissions_check( $request ) {
+		if ( ! $this->get_user_permission_check() ) {
+			return new WP_Error( 'rest_authorization_required',
+				__( 'Sorry, you are not allowed to see the activity.', 'buddypress' ),
+				array(
+					'status' => rest_authorization_required_code(),
+				)
+			);
+		}
+
 		if ( ! $this->can_see( $request ) ) {
 			return new WP_Error( 'rest_user_cannot_view_activity',
 				__( 'Sorry, you cannot view the activities.', 'buddypress' ),
@@ -237,9 +281,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 * @return WP_Error|bool
 	 */
 	public function get_items_permissions_check( $request ) {
-
-		// Bail early.
-		if ( ! is_user_logged_in() ) {
+		if ( ! $this->get_user_permission_check() ) {
 			return new WP_Error( 'rest_authorization_required',
 				__( 'Sorry, you are not allowed to see the activities.', 'buddypress' ),
 				array(
@@ -265,14 +307,24 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		$id                = $request['id'];
 		$parent            = $request['parent'];
 		$type              = $request['type'];
+		$show_hidden       = $request['hidden'];
 		$activity_id       = 0;
 
-		if ( ( 'activity_update' === $type ) && bp_is_active( 'groups' ) && ! is_null( $prime ) ) {
-			$activity_id = groups_post_update( $prepared_activity );
+		// Post a regular activity update.
+		if ( 'activity_update' === $type ) {
+			if ( bp_is_active( 'groups' ) && ! is_null( $prime ) ) {
+				$activity_id = groups_post_update( $prepared_activity );
+			} else {
+				$activity_id = bp_activity_post_update( $prepared_activity );
+			}
+
+			// Post an activity comment.
 		} elseif ( ( 'activity_comment' === $type ) && ! is_null( $id ) && ! is_null( $parent ) ) {
 			$activity_id = bp_activity_new_comment( $prepared_activity );
+
+			// Otherwise add an activity.
 		} else {
-			$activity_id = bp_activity_post_update( $prepared_activity );
+			$activity_id = bp_activity_add( $prepared_activity );
 		}
 
 		if ( ! is_numeric( $activity_id ) ) {
@@ -287,6 +339,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		$activity = bp_activity_get( array(
 			'in'               => $activity_id,
 			'display_comments' => 'stream',
+			'show_hidden'      => $show_hidden,
 		) );
 
 		$retval = array(
@@ -295,7 +348,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			),
 		);
 
-		$retval = rest_ensure_response( $retval );
+		$response = rest_ensure_response( $retval );
 
 		/**
 		 * Fires after an activity is created via the REST API.
@@ -303,12 +356,12 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		 * @since 0.1.0
 		 *
 		 * @param object           $activity The created activity.
-		 * @param WP_REST_Response $retval   The response data.
+		 * @param WP_REST_Response $response The response data.
 		 * @param WP_REST_Request  $request  The request sent to the API.
 		 */
-		do_action( 'rest_activity_create_item', $activity, $retval, $request );
+		do_action( 'rest_activity_create_item', $activity, $response, $request );
 
-		return $retval;
+		return $response;
 	}
 
 	/**
@@ -320,6 +373,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 * @return true|WP_Error True if the request has access to create, WP_Error object otherwise.
 	 */
 	public function create_item_permissions_check( $request ) {
+
 		// Bail early.
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'rest_authorization_required',
@@ -330,7 +384,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			);
 		}
 
-		// Bail early.
+		// Bail early, if no content.
 		if ( empty( $request['content'] ) ) {
 			return new WP_Error( 'rest_create_activity_empty_content',
 				__( 'Please, enter some content.', 'buddypress' ),
@@ -340,10 +394,10 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			);
 		}
 
-		$acc = $request['prime_association'];
+		$item_id = $request['prime_association'];
 
-		if ( ( 'activity_update' === $request['type'] ) && bp_is_active( 'groups' ) && ! is_null( $acc ) ) {
-			if ( ! $this->show_hidden( 'groups', $acc ) ) {
+		if ( bp_is_active( 'groups' ) && buddypress()->groups->id === $request['component'] && ! is_null( $item_id ) ) {
+			if ( ! $this->show_hidden( $request['component'], $item_id ) ) {
 				return new WP_Error( 'rest_user_cannot_create_activity',
 					__( 'Sorry, you are not allowed to create activity to this group.', 'buddypress' ),
 					array(
@@ -395,7 +449,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			),
 		);
 
-		$retval = rest_ensure_response( $retval );
+		$response = rest_ensure_response( $retval );
 
 		/**
 		 * Fires after an activity is updated via the REST API.
@@ -403,12 +457,12 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		 * @since 0.1.0
 		 *
 		 * @param object           $activity The updated activity.
-		 * @param WP_REST_Response $retval   The response data.
+		 * @param WP_REST_Response $response The response data.
 		 * @param WP_REST_Request  $request  The request sent to the API.
 		 */
-		do_action( 'rest_activity_update_item', $activity, $retval, $request );
+		do_action( 'rest_activity_update_item', $activity, $response, $request );
 
-		return $retval;
+		return $response;
 	}
 
 	/**
@@ -442,10 +496,10 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			);
 		}
 
-		// If activity author does not match logged_in user, block access.
+		// If activity author does not match logged_in user, or it is moderator, block access.
 		if ( bp_loggedin_user_id() !== $activity->user_id ) {
 			return new WP_Error( 'rest_activity_cannot_update',
-				__( 'You are not allowed to update this activity.', 'buddypress' ),
+				__( 'Sorry, you are not allowed to update this activity.', 'buddypress' ),
 				array(
 					'status' => 500,
 				)
@@ -532,7 +586,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			);
 		}
 
-		if ( false === $this->can_see( $request, true ) ) {
+		if ( ! bp_activity_user_can_delete( $activity ) ) {
 			return new WP_Error( 'rest_user_cannot_delete_activity',
 				__( 'Sorry, you cannot delete the activity.', 'buddypress' ),
 				array(
@@ -545,21 +599,171 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	}
 
 	/**
+	 * Adds or removes the activity from the current user's favorites.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_favorite( $request ) {
+		$activity = $this->get_activity_object( $request );
+		$user_id  = get_current_user_id();
+
+		$result = false;
+		if ( in_array( $activity->id, $this->user_favorites, true ) ) {
+			$result  = bp_activity_remove_user_favorite( $activity->id, $user_id );
+			$message = __( 'Sorry, you cannot remove the activity from your favorites.', 'buddypress' );
+
+			// Update the user favorites, removing the activity ID.
+			$this->user_favorites = array_diff( $this->user_favorites, array( $activity->id ) );
+		} else {
+			$result = bp_activity_add_user_favorite( $activity->id, $user_id );
+			$message = __( 'Sorry, you cannot add the activity to your favorites.', 'buddypress' );
+
+			// Update the user favorites, adding the activity ID.
+			$this->user_favorites[] = (int) $activity->id;
+		}
+
+		if ( ! $result ) {
+			return new WP_Error( 'rest_user_cannot_update_activity_favorite',
+				$message,
+				array(
+					'status' => 500,
+				)
+			);
+		}
+
+		// Prepare the response now the user favorites has been updated.
+		$retval = array(
+			$this->prepare_response_for_collection(
+				$this->prepare_item_for_response( $activity, $request )
+			),
+		);
+
+		$response = rest_ensure_response( $retval );
+
+		/**
+		 * Fires after user favorited activities has been updated via the REST API.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param object           $activity       The updated activity.
+		 * @param array            $user_favorites The updated user favorites.
+		 * @param WP_REST_Response $response       The response data.
+		 * @param WP_REST_Request  $request        The request sent to the API.
+		 */
+		do_action( 'rest_activity_update_favorite', $activity, $this->user_favorites, $response, $request );
+
+		return $response;
+	}
+
+	/**
+	 * Check if a given request has access to update user favorites.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param  WP_REST_Request $request Full details about the request.
+	 * @return bool|WP_Error
+	 */
+	public function update_favorite_permissions_check( $request ) {
+		// Bail early.
+		if ( ! $this->get_user_permission_check() ) {
+			return new WP_Error( 'rest_authorization_required',
+				__( 'Sorry, you need to be logged in to update your favorites.', 'buddypress' ),
+				array(
+					'status' => rest_authorization_required_code(),
+				)
+			);
+		}
+
+		if ( ! bp_activity_can_favorite() ) {
+			return new WP_Error( 'rest_activity_cannot_favorite',
+				__( 'Sorry, Activity cannot be favorited.', 'buddypress' ),
+				array(
+					'status' => 500,
+				)
+			);
+		}
+
+		$activity = $this->get_activity_object( $request );
+
+		if ( empty( $activity->id ) ) {
+			return new WP_Error( 'rest_activity_invalid_id',
+				__( 'Invalid activity id.', 'buddypress' ),
+				array(
+					'status' => 404,
+				)
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Renders the content of an activity.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param stdClass $activity Activity data.
+	 * @return string The rendered activity content.
+	 */
+	public function render_item( $activity ) {
+		$rendered = '';
+
+		if ( empty( $activity->content ) ) {
+			return $rendered;
+		}
+
+		// Do not truncate activities.
+		add_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
+
+		if ( 'activity_comment' === $activity->type ) {
+			$rendered = apply_filters( 'bp_get_activity_content', $activity->content );
+		} else {
+			$activities_template = null;
+
+			if ( isset( $GLOBALS['activities_template'] ) ) {
+				$activities_template = $GLOBALS['activities_template'];
+			}
+
+			// Set the `activities_template` global for the current activity.
+			$GLOBALS['activities_template']           = new stdClass();
+			$GLOBALS['activities_template']->activity = $activity;
+
+			// Set up activity oEmbed cache.
+			bp_activity_embed();
+
+			$rendered = apply_filters( 'bp_get_activity_content_body', $activity->content );
+
+			// Restore the `activities_template` global.
+			$GLOBALS['activities_template'] = $activities_template;
+		}
+
+		// Restore the filter to truncate activities.
+		remove_filter( 'bp_activity_maybe_truncate_entry', '__return_false' );
+
+		return $rendered;
+	}
+
+	/**
 	 * Prepares activity data for return as an object.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param stdClass        $activity Activity data.
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @param boolean         $is_raw Optional, not used. Defaults to false.
+	 * @param WP_REST_Request $request  Full details about the request.
 	 * @return WP_REST_Response
 	 */
-	public function prepare_item_for_response( $activity, $request, $is_raw = false ) {
+	public function prepare_item_for_response( $activity, $request ) {
 		$data = array(
 			'user'                  => $activity->user_id,
 			'component'             => $activity->component,
-			'content'               => $activity->content,
-			'date'                  => $this->prepare_date_response( $activity->date_recorded ),
+			'content'               => array(
+				'raw'      => $activity->content,
+				'rendered' => $this->render_item( $activity ),
+			),
+			'date'                  => bp_rest_prepare_date_response( $activity->date_recorded ),
 			'id'                    => $activity->id,
 			'link'                  => bp_activity_get_permalink( $activity->id ),
 			'parent'                => 'activity_comment' === $activity->type ? $activity->item_id : 0,
@@ -568,6 +772,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			'status'                => $activity->is_spam ? 'spam' : 'published',
 			'title'                 => $activity->action,
 			'type'                  => $activity->type,
+			'favorited'             => in_array( $activity->id, $this->user_favorites, true ),
 		);
 
 		$schema = $this->get_item_schema();
@@ -604,10 +809,11 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		 *
 		 * @since 0.1.0
 		 *
-		 * @param array           $response
-		 * @param WP_REST_Request $request Request used to generate the response.
+		 * @param object           $response The Response data.
+		 * @param WP_REST_Request  $request  Request used to generate the response.
+		 * @param WP_REST_Request  $activity The activity object.
 		 */
-		return apply_filters( 'rest_prepare_buddypress_activity_value', $response, $request );
+		return apply_filters( 'rest_activity_prepare_value', $response, $request, $activity );
 	}
 
 	/**
@@ -615,7 +821,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param  object          $comments Comments.
+	 * @param  array           $comments Comments.
 	 * @param  WP_REST_Request $request Full details about the request.
 	 * @return array           An array of activity comments.
 	 */
@@ -632,7 +838,16 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			);
 		}
 
-		return $data;
+		/**
+		 * Filter activity comments returned from the API.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param array           $data     An array of activity comments.
+		 * @param WP_REST_Request $request  Request used to generate the response.
+		 * @param array           $comments Comments.
+		 */
+		return apply_filters( 'rest_activity_prepare_comments', $data, $request, $comments );
 	}
 
 	/**
@@ -653,9 +868,15 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 				$prepared_activity->activity_id = $activity->id;
 			} else {
 				$prepared_activity->id         = $activity->id;
-				$prepared_activity->component  = buddypress()->activity->id;
 				$prepared_activity->error_type = 'wp_error';
 			}
+		}
+
+		// Activity author ID.
+		if ( ! empty( $schema['properties']['user'] ) && isset( $request['user'] ) ) {
+			$prepared_activity->user_id = (int) $request['user'];
+		} else {
+			$prepared_activity->user_id = get_current_user_id();
 		}
 
 		// Comment parent.
@@ -663,9 +884,30 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			$prepared_activity->parent_id = $request['parent'];
 		}
 
-		// Group ID.
-		if ( ! empty( $schema['properties']['prime_association'] ) && ( 'activity_update' === $request['type'] ) && isset( $request['prime_association'] ) ) {
-			$prepared_activity->group_id = (int) $request['prime_association'];
+		// Activity component.
+		if ( ! empty( $schema['properties']['component'] ) && isset( $request['component'] ) ) {
+			$prepared_activity->component = $request['component'];
+		} else {
+			$prepared_activity->component = buddypress()->activity->id;
+		}
+
+		// Activity Item ID.
+		if ( ! empty( $schema['properties']['prime_association'] ) && isset( $request['prime_association'] ) ) {
+			$item_id = (int) $request['prime_association'];
+
+			// Set the group ID of the activity.
+			if ( bp_is_active( 'groups' ) && isset( $prepared_activity->component ) && buddypress()->groups->id === $prepared_activity->component ) {
+				$prepared_activity->group_id = $item_id;
+
+				// Use a generic item ID for other components.
+			} else {
+				$prepared_activity->item_id = $item_id;
+			}
+		}
+
+		// Secondary Item ID.
+		if ( ! empty( $schema['properties']['secondary_association'] ) && isset( $request['secondary_association'] ) ) {
+			$prepared_activity->secondary_item_id = (int) $request['secondary_association'];
 		}
 
 		// Activity type.
@@ -675,7 +917,16 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 
 		// Activity content.
 		if ( ! empty( $schema['properties']['content'] ) && isset( $request['content'] ) ) {
-			$prepared_activity->content = $request['content'];
+			if ( is_string( $request['content'] ) ) {
+				$prepared_activity->content = $request['content'];
+			} elseif ( isset( $request['content']['raw'] ) ) {
+				$prepared_activity->content = $request['content']['raw'];
+			}
+		}
+
+		// Activity Sitewide visibility.
+		if ( ! empty( $schema['properties']['hidden'] ) && isset( $request['hidden'] ) ) {
+			$prepared_activity->hide_sitewide = (bool) $request['hidden'];
 		}
 
 		/**
@@ -686,7 +937,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		 * @param stdClass        $prepared_activity An object prepared for inserting or updating the database.
 		 * @param WP_REST_Request $request Request object.
 		 */
-		return apply_filters( 'rest_pre_insert_buddypress_activity_value', $prepared_activity, $request );
+		return apply_filters( 'rest_activity_pre_insert_value', $prepared_activity, $request );
 	}
 
 	/**
@@ -694,7 +945,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param array $activity Activity.
+	 * @param object $activity Activity object.
 	 * @return array Links for the given plugin.
 	 */
 	protected function prepare_links( $activity ) {
@@ -720,6 +971,12 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			);
 		}
 
+		if ( bp_activity_can_favorite() ) {
+			$links['favorite'] = array(
+				'href' => rest_url( $url . '/favorite' ),
+			);
+		}
+
 		return $links;
 	}
 
@@ -733,11 +990,11 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 * @return boolean
 	 */
 	protected function can_see( $request, $edit = false ) {
-		$user_id  = bp_loggedin_user_id();
+		$user_id  = get_current_user_id();
 		$activity = $this->get_activity_object( $request );
 		$retval   = false;
 
-		// Fix for edit content.
+		// Fix for edit context.
 		if ( $edit && 'edit' === $request['context'] && ! bp_current_user_can( 'bp_moderate' ) ) {
 			return false;
 		}
@@ -753,9 +1010,10 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		 *
 		 * @param bool                 $retval   Return value.
 		 * @param int                  $user_id  User ID.
+		 * @param bool                 $edit     Edit content.
 		 * @param BP_Activity_Activity $activity Activity object.
 		 */
-		return apply_filters( 'rest_activity_endpoint_can_see', $retval, $user_id, $activity );
+		return (bool) apply_filters( 'rest_activity_can_see', $retval, $user_id, $edit, $activity );
 	}
 
 	/**
@@ -763,12 +1021,12 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param  string $component Group component.
-	 * @param  int    $group_id  Group ID.
+	 * @param  string $component The activity component.
+	 * @param  int    $item_id   The activity item ID.
 	 * @return boolean
 	 */
-	protected function show_hidden( $component, $group_id ) {
-		$user_id = bp_loggedin_user_id();
+	protected function show_hidden( $component, $item_id ) {
+		$user_id = get_current_user_id();
 		$retval  = false;
 
 		// Moderators as well.
@@ -777,42 +1035,28 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		}
 
 		// If activity is from a group, do an extra cap check.
-		if ( bp_is_active( 'groups' ) && 'groups' === $component ) {
-			$retval = true;
-
-			// User is a member of the group.
-			if ( (bool) groups_is_user_member( $user_id, $group_id ) ) {
-				$retval = true;
-			}
-
+		if ( ! $retval && ! empty( $item_id ) && bp_is_active( $component ) && buddypress()->groups->id === $component ) {
 			// Group admins and mods have access as well.
-			if ( groups_is_user_admin( $user_id, $group_id ) || groups_is_user_mod( $user_id, $group_id ) ) {
+			if ( groups_is_user_admin( $user_id, $item_id ) || groups_is_user_mod( $user_id, $item_id ) ) {
+				$retval = true;
+
+				// User is a member of the group.
+			} elseif ( (bool) groups_is_user_member( $user_id, $item_id ) ) {
 				$retval = true;
 			}
 		}
 
-		return (bool) $retval;
-	}
-
-	/**
-	 * Convert the input date to RFC3339 format.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param string      $date_gmt Date GMT format.
-	 * @param string|null $date Optional. Date object.
-	 * @return string|null ISO8601/RFC3339 formatted datetime.
-	 */
-	public function prepare_date_response( $date_gmt, $date = null ) {
-		if ( isset( $date ) ) {
-			return mysql_to_rfc3339( $date );
-		}
-
-		if ( '0000-00-00 00:00:00' === $date_gmt ) {
-			return null;
-		}
-
-		return mysql_to_rfc3339( $date_gmt );
+		/**
+		 * Filter here to edit the `show_hidden` activity param for the given component/item_id.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param boolean $retval    True to include hidden activities. False otherwise.
+		 * @param integer $user_id   The current user ID.
+		 * @param string  $component The activity component.
+		 * @param integer $item_id   The activity item ID.
+		 */
+		return (bool) apply_filters( 'rest_activity_show_hidden', $retval, $user_id, $component, $item_id );
 	}
 
 	/**
@@ -827,10 +1071,11 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		$activity_id = is_numeric( $request ) ? $request : (int) $request['id'];
 
 		$activity = bp_activity_get_specific( array(
-			'activity_ids' => array( $activity_id ),
+			'activity_ids'     => array( $activity_id ),
+			'display_comments' => true,
 		) );
 
-		if ( is_array( $activity ) && isset( $activity['activities'][0] ) ) {
+		if ( is_array( $activity ) && ! empty( $activity['activities'][0] ) ) {
 			return $activity['activities'][0];
 		}
 
@@ -885,9 +1130,9 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 
 				'component'             => array(
 					'context'     => array( 'view', 'edit' ),
-					'description' => __( 'The BuddyPress component the object relates to.', 'buddypress' ),
+					'description' => __( 'The active BuddyPress component the object relates to.', 'buddypress' ),
 					'type'        => 'string',
-					'enum'        => array_keys( bp_core_get_components() ),
+					'enum'        => array_keys( buddypress()->active_components ),
 				),
 
 				'type'                  => array(
@@ -906,7 +1151,24 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 				'content'               => array(
 					'context'     => array( 'view', 'edit' ),
 					'description' => __( 'HTML content of the object.', 'buddypress' ),
-					'type'        => 'string',
+					'type'        => 'object',
+					'arg_options' => array(
+						'sanitize_callback' => null, // Note: sanitization implemented in self::prepare_item_for_database().
+						'validate_callback' => null, // Note: validation implemented in self::prepare_item_for_database().
+					),
+					'properties'  => array(
+						'raw'       => array(
+							'description' => __( 'Content for the object, as it exists in the database.', 'buddypress' ),
+							'type'        => 'string',
+							'context'     => array( 'edit' ),
+						),
+						'rendered'  => array(
+							'description' => __( 'HTML content for the object, transformed for display.', 'buddypress' ),
+							'type'        => 'string',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+					),
 				),
 
 				'date'                  => array(
@@ -933,6 +1195,19 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 					'description' => __( 'The ID for the parent of the object.', 'buddypress' ),
 					'type'        => 'array',
 					'context'     => array( 'view', 'edit' ),
+				),
+
+				'hidden'                => array(
+					'context'     => array( 'edit' ),
+					'description' => __( 'Whether the activity object should be sitewide hidden or not.', 'buddypress' ),
+					'type'        => 'boolean',
+				),
+
+				'favorited'             => array(
+					'context'     => array( 'view', 'edit' ),
+					'description' => __( 'Whether the activity object has been favorited by the current user.', 'buddypress' ),
+					'type'        => 'boolean',
+					'readonly'    => true,
 				),
 			),
 		);
@@ -977,7 +1252,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 	 * @return array
 	 */
 	public function get_collection_params() {
-		$params = parent::get_collection_params();
+		$params                       = parent::get_collection_params();
 		$params['context']['default'] = 'view';
 
 		$params['exclude'] = array(
@@ -1026,16 +1301,15 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		);
 
 		$params['user'] = array(
-			'description'       => __( 'Limit result set to items created by specific users.', 'buddypress' ),
-			'type'              => 'array',
-			'default'           => array(),
-			'sanitize_callback' => 'wp_parse_id_list',
-			'validate_callback' => 'rest_validate_request_arg',
+			'description'       => __( 'Limit result set to items created by a specific user.', 'buddypress' ),
+			'type'              => 'integer',
+			'default'           => '',
+			'sanitize_callback' => 'absint',
 		);
 
 		$params['status'] = array(
-			'default'           => 'published',
 			'description'       => __( 'Limit result set to items with a specific status.', 'buddypress' ),
+			'default'           => 'published',
 			'type'              => 'string',
 			'enum'              => array( 'published', 'spam' ),
 			'sanitize_callback' => 'sanitize_key',
@@ -1043,23 +1317,23 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		);
 
 		$params['primary_id'] = array(
-			'description'       => __( 'Limit result set to items with a specific prime assocation.', 'buddypress' ),
-			'type'              => 'array',
-			'default'           => array(),
-			'sanitize_callback' => 'wp_parse_id_list',
+			'description'       => __( 'Limit result set to items with a specific prime association.', 'buddypress' ),
+			'type'              => 'integer',
+			'default'           => '',
+			'sanitize_callback' => 'absint',
 		);
 
 		$params['secondary_id'] = array(
-			'description'       => __( 'Limit result set to items with a specific secondary assocation.', 'buddypress' ),
-			'type'              => 'array',
-			'default'           => array(),
-			'sanitize_callback' => 'wp_parse_id_list',
+			'description'       => __( 'Limit result set to items with a specific secondary association.', 'buddypress' ),
+			'type'              => 'integer',
+			'default'           => '',
+			'sanitize_callback' => 'absint',
 		);
 
 		$params['component'] = array(
-			'description'       => __( 'Limit result set to items with a specific BuddyPress component.', 'buddypress' ),
+			'description'       => __( 'Limit result set to items with a specific active BuddyPress component.', 'buddypress' ),
 			'type'              => 'string',
-			'enum'              => array_keys( bp_core_get_components() ),
+			'enum'              => array_keys( buddypress()->active_components ),
 			'sanitize_callback' => 'sanitize_key',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
@@ -1081,7 +1355,7 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 		);
 
 		$params['display_comments'] = array(
-			'description'       => __( 'False for no comments. stream for within stream display, threaded for below each activity item..', 'buddypress' ),
+			'description'       => __( 'False for no comments. stream for within stream display, threaded for below each activity item.', 'buddypress' ),
 			'default'           => '',
 			'type'              => 'string',
 			'validate_callback' => 'rest_validate_request_arg',
