@@ -1,6 +1,17 @@
 # Change Log
 
-## 1.1.0
+## 1.0.2
+
+_Requires WordPress 4.9 & Gutenberg 3.4 or up (if Gutenberg is active)_
+
+### Features
+
++ Synchronize the latest BP Activity Endpoint improvements and adapt the plugin to them.
+
+### Props
+@renatonascalves (for his great work on the BP Rest API 👏)
+
+## 1.0.1
 
 _Requires WordPress 4.9 & Gutenberg 3.4 or up_
 
