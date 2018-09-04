@@ -202,12 +202,12 @@ add_action( 'bp_register_activity_actions', 'post_activities_register_activity_t
  */
 function post_activities_new_activity_args( $args = array() ) {
 	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-		if ( ! isset( $_POST['type'] ) || 'publication_activity' !== $_POST['type'] || ! isset( $_POST['secondary_item_id'] ) ) {
+		if ( ! isset( $args['type'] ) || 'publication_activity' !== $args['type'] || empty( $args['secondary_item_id'] ) ) {
 			return $args;
 		}
 
 		$args = array_merge( $args, array(
-			'primary_link' => get_permalink( (int) $_POST['secondary_item_id'] ),
+			'primary_link' => get_permalink( (int) $args['secondary_item_id'] ),
 		) );
 	}
 
