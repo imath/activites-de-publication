@@ -242,6 +242,45 @@ function post_activities_get_activity_args( $args = array() ) {
 }
 
 /**
+ * Checks a user can read hidden activities for the post type.
+ *
+ * @since  1.0.2
+ *
+ * @param  boolean $retval  The permission to view hidden activities set by the Activity Endpoint.
+ * @param  integer $user_id The user ID asking for this permission.
+ * @return boolean          The permission to view the activity item.
+ */
+function post_activities_can_read_hidden( $retval = false, $user_id = 0 ) {
+	if ( ! $user_id || ! isset( $_REQUEST['type'] ) || 'publication_activity' !== $_REQUEST['type'] ) {
+		return $retval;
+	}
+
+	$post_id = 0;
+	if ( isset( $_GET['secondary_id'] ) ) {
+		$post_id = (int) $_GET['secondary_id'];
+	} elseif ( isset( $_POST['secondary_association'] ) ) {
+		$post_id = (int) $_POST['secondary_association'];
+	}
+
+	if ( ! $post_id ) {
+		return $retval;
+	}
+
+	$post_type = get_post_type( $post_id );
+	if ( ! $post_type ) {
+		return $retval;
+	}
+
+	$post_type_object = get_post_type_object( $post_type );
+	if ( ! isset( $post_type_object->cap->read_private_posts ) ) {
+		return $retval;
+	}
+
+	return user_can( $user_id, $post_type_object->cap->read_private_posts );
+}
+add_filter( 'rest_activity_show_hidden', 'post_activities_can_read_hidden', 10, 2 );
+
+/**
  * Gets the Activity edit link used into the WordPress Administration.
  *
  * NB: This is used to be consistent with how WordPress let moderators edit the post
