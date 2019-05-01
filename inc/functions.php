@@ -148,16 +148,11 @@ add_action( 'init', 'post_activities_register_meta', 50 );
  * Registers the included Rest Activity Endpoint if the BP Rest API is not active on the site.
  *
  * @since  1.0.0
+ * @deprecated 2.0.0
  */
 function post_activities_rest_init() {
-	if ( post_activities()->bp_rest_is_enabled ) {
-		return;
-	}
-
-	$controller = new BP_REST_Activity_Endpoint();
-	$controller->register_routes();
+	_deprecated_function( __FUNCTION__, '2.0.0' );
 }
-add_action( 'bp_rest_api_init', 'post_activities_rest_init' );
 
 /**
  * Formats the Activités de publication activity action string.
@@ -258,8 +253,8 @@ function post_activities_can_read_hidden( $retval = false, $user_id = 0 ) {
 	$post_id = 0;
 	if ( isset( $_GET['secondary_id'] ) ) {
 		$post_id = (int) $_GET['secondary_id'];
-	} elseif ( isset( $_POST['secondary_association'] ) ) {
-		$post_id = (int) $_POST['secondary_association'];
+	} elseif ( isset( $_POST['secondary_id'] ) ) {
+		$post_id = (int) $_POST['secondary_id'];
 	}
 
 	if ( ! $post_id ) {
@@ -309,6 +304,7 @@ function post_activities_get_activity_edit_link( $id = 0 ) {
  * @since  1.0.0
  * @since  1.0.2 Sets Response extra data.
  *               Edit the filtered hook in favor of `rest_activity_prepare_value`.
+ * @since  2.0.0 The Activity Rest Endpoint schema has changed, updating `user` to `user_id`
  *
  * @param  WP_REST_Response $response The BP Rest response.
  * @return WP_REST_Response           The "rendered" BP Rest response.
@@ -316,8 +312,8 @@ function post_activities_get_activity_edit_link( $id = 0 ) {
 function post_activities_prepare_bp_activity_value( WP_REST_Response $response ) {
 	if ( isset( $response->data['content'] ) ) {
 		// Add needed data for the user.
-		$response->data['user_name'] = bp_core_get_user_displayname( $response->data['user'] );
-		$response->data['user_link'] = apply_filters( 'bp_get_activity_user_link', bp_core_get_user_domain( $response->data['user'] ) );
+		$response->data['user_name'] = bp_core_get_user_displayname( $response->data['user_id'] );
+		$response->data['user_link'] = apply_filters( 'bp_get_activity_user_link', bp_core_get_user_domain( $response->data['user_id'] ) );
 
 		// Add needed meta data
 		$timestamp = strtotime( $response->data['date'] );
@@ -334,7 +330,7 @@ function post_activities_prepare_bp_activity_value( WP_REST_Response $response )
 
 	return $response;
 }
-add_filter( 'rest_activity_prepare_value', 'post_activities_prepare_bp_activity_value', 10, 1 );
+add_filter( 'bp_rest_activity_prepare_value', 'post_activities_prepare_bp_activity_value', 10, 1 );
 
 /**
  * Adds the number of activities and pages into the corresponding Request headers.
@@ -358,6 +354,7 @@ function post_activities_get_bp_activities( $activities = array(), WP_REST_Respo
  * Registers needed JavaScript for the front end.
  *
  * @since  1.0.0
+ * @since  2.0.0 The Activity Rest Endpoint is now displaying activities to user not logged in.
  */
 function post_activities_front_register_scripts() {
 	if ( ! isset( wp_scripts()->registered['bp-nouveau-activity-post-form'] ) ) {
@@ -383,10 +380,22 @@ function post_activities_front_register_scripts() {
 		}
 	}
 
+	$dependencies = array( 'wp-api-request' );
+	if ( ! is_user_logged_in() ) {
+		$dependencies = array_merge( array(
+			'bp-nouveau',
+			'bp-nouveau-activity',
+			'json2',
+			'wp-backbone',
+		), $dependencies );
+	} else {
+		array_unshift( $dependencies, 'bp-nouveau-activity-post-form' );
+	}
+
 	wp_register_script(
 		'activites-d-article-front-script',
 		sprintf( '%1$sfront%2$s.js', post_activities_js_url(), post_activities_min_suffix() ),
-		array( 'bp-nouveau-activity-post-form', 'wp-api-request' ),
+		$dependencies,
 		post_activities_version(),
 		true
 	);
@@ -487,7 +496,7 @@ function post_activities_front_enqueue_scripts() {
 
 		'mustLogIn'         => sprintf(
 			/* translators: %s: login URL */
-			__( 'Vous devez <a href="%s">être connecté·e</a> pour afficher ou publier des conversations.', 'activites-de-publication' ),
+			__( 'Vous devez <a href="%s">être connecté·e</a> publier des conversations.', 'activites-de-publication' ),
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
 		),
 		'publishLabel'         => __( 'Publier', 'activites-de-publication' ),
@@ -572,8 +581,18 @@ function post_activities_js_templates( $content = '' ) {
 
 	ob_start();
 
-	// Load the Post Form template
-	require_once( $path . 'buddypress/common/js-templates/activity/form.php' );
+	// Load the Post Form template for the logged in user.
+	if ( is_user_logged_in() ) {
+		require_once( $path . 'buddypress/common/js-templates/activity/form.php' );
+
+	// Add a Feedback template as the Post Form is not loaced.
+	} else {
+		?>
+		<script type="text/html" id="tmpl-activity-post-form-feedback">
+			<span class="bp-icon" aria-hidden="true"></span><p>{{{data.message}}}</p>
+		</script>
+		<?php
+	}
 
 	// Load the Entry template
 	bp_get_template_part( 'common/js-templates/activity/activites-de-publication' );
