@@ -5,7 +5,7 @@
  * Description: Utilisez les activités de BuddyPress pour dynamiser les conversations de vos publications WordPress.
  * Version: 1.0.4
  * Requires at least: 4.9.8
- * Tested up to: 5.0
+ * Tested up to: 5.2
  * License: GPLv2 or later
  * Author: imath
  * Author URI: https://imathi.eu/
