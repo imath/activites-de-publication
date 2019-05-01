@@ -10,29 +10,82 @@
 		return;
 	}
 
-	var postForm = bp.Views.PostForm, postContainer = $( '#tmpl-activity-post-form-buttons' ).parent(),
-	    postFormAvatar = bp.Views.FormAvatar, postFormTextarea = bp.Views.WhatsNew, containerClass = 'no-nav';
+	var postForm, postContainer, activityContainer, postFormAvatar, postFormTextarea, containerClass = 'no-nav';
+
+	if ( typeof bp.View === 'undefined' ) {
+		_.extend( bp, _.pick( wp, 'Backbone', 'ajax', 'template' ) );
+
+		bp.Models      = bp.Models || {};
+		bp.Collections = bp.Collections || {};
+		bp.Views       = bp.Views || {};
+
+		// Extend wp.Backbone.View with .prepare() and .inject()
+		bp.View = bp.Backbone.View.extend( {
+			inject: function( selector ) {
+				this.render();
+				$(selector).html( this.el );
+				this.views.ready();
+			},
+
+			prepare: function() {
+				if ( ! _.isUndefined( this.model ) && _.isFunction( this.model.toJSON ) ) {
+					return this.model.toJSON();
+				} else {
+					return {};
+				}
+			},
+
+			prepend: function( selector ) {
+				this.render();
+				$( selector ).prepend( this.el );
+				this.views.ready();
+			}
+		} );
+	}
+
+	if ( $( '#tmpl-activity-post-form-buttons' ).length ) {
+		postContainer = $( '#tmpl-activity-post-form-buttons' ).parent();
+	} else {
+		postContainer = $( '#tmpl-activites-de-publication-nav' ).parent();
+	}
+
+	if ( bp.Views.PostForm ) {
+		postForm = bp.Views.PostForm;
+		postFormAvatar = bp.Views.FormAvatar;
+		postFormTextarea = bp.Views.WhatsNew;
+	}
 
 	// Container for the Nav and Activity post form (comments allowed).
 	if ( $( '#comments' ).length ) {
 		containerClass = 'hide';
 
 		$( '#comments' ).before( $( '<div></div>' ).prop( 'id', 'activites-de-publication-nav' ) );
-		$( '#activites-de-publication-nav' ).after(
-			$( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' )
-			                  .addClass( containerClass + ' comments-area' )
-		);
+
+		if ( postForm ) {
+			$( '#activites-de-publication-nav' ).after(
+				$( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' )
+								  .addClass( containerClass + ' comments-area' )
+			);
+			activityContainer = $( '#bp-nouveau-activity-form' );
+
+		} else {
+			activityContainer = $( '#activites-de-publication-nav' );
+		}
 
 	// Container for the Activity post form (comments not allowed).
-	} else {
+	} else if ( postForm ) {
 		$( postContainer ).after(
 			$( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' )
 			                  .addClass( containerClass + ' comments-area' )
 		);
+
+		activityContainer = $( '#bp-nouveau-activity-form' );
+	} else {
+		activityContainer = postContainer;
 	}
 
 	// Container for the list of Activités de publication for this Post.
-	$( '#bp-nouveau-activity-form' ).after(
+	activityContainer.after(
 		$( '<div></div>' ).prop( 'id', 'activites-de-publication-list' )
 		                  .addClass( containerClass + ' comments-area' )
 	);
@@ -118,116 +171,141 @@
 		}
 	} );
 
-	/**
-	 * Activity Post Form overrides.
-	 */
-	bp.Views.PostForm = postForm.extend( {
-		initialize: function() {
-			// Use Parent initializer.
-			postForm.prototype.initialize.apply( this, arguments );
+	if ( postForm ) {
+		/**
+		 * Activity Post Form overrides.
+		 */
+		bp.Views.PostForm = postForm.extend( {
+			initialize: function() {
+				// Use Parent initializer.
+				postForm.prototype.initialize.apply( this, arguments );
 
-			this.on( 'ready', this.bpMentionsRefresh, this );
-		},
+				this.on( 'ready', this.bpMentionsRefresh, this );
+			},
 
-		bpMentionsRefresh: function() {
-			if ( 'undefined' !== typeof bp_mentions || 'undefined' !== typeof bp.mentions ) {
-				$( '.bp-suggestions' ).bp_mentions( bp.mentions.users );
-			}
-		},
-
-		postUpdate: function( event ) {
-			if ( event ) {
-				if ( 'keydown' === event.type && ( 13 !== event.keyCode || ! event.ctrlKey ) ) {
-					return event;
+			bpMentionsRefresh: function() {
+				if ( 'undefined' !== typeof bp_mentions || 'undefined' !== typeof bp.mentions ) {
+					$( '.bp-suggestions' ).bp_mentions( bp.mentions.users );
 				}
+			},
 
-				event.preventDefault();
-			}
-
-			var self = this, meta = {},
-			    activite = new bp.Models.activite();
-
-			// Set the content and meta
-			_.each( this.$el.serializeArray(), function( pair ) {
-				pair.name = pair.name.replace( '[]', '' );
-				if ( 'whats-new' === pair.name ) {
-					self.model.set( 'content', pair.value );
-				} else if ( -1 === _.indexOf( ['aw-whats-new-submit', 'whats-new-post-in'], pair.name ) ) {
-					if ( _.isUndefined( meta[ pair.name ] ) ) {
-						meta[ pair.name ] = pair.value;
-					} else {
-						if ( ! _.isArray( meta[ pair.name ] ) ) {
-							meta[ pair.name ] = [ meta[ pair.name ] ];
-						}
-
-						meta[ pair.name ].push( pair.value );
+			postUpdate: function( event ) {
+				if ( event ) {
+					if ( 'keydown' === event.type && ( 13 !== event.keyCode || ! event.ctrlKey ) ) {
+						return event;
 					}
+
+					event.preventDefault();
 				}
-			} );
 
-			// Silently add meta
-			this.model.set( meta, { silent: true } );
+				var self = this, meta = {},
+					activite = new bp.Models.activite();
 
-			// Save the activity
-			activite.save(
-				_.extend( this.model.attributes, {
-					type: 'publication_activity',
-					'prime_association' : _activitesDePublicationSettings.primaryID,
-					'secondary_association' : _activitesDePublicationSettings.secondaryID,
-					user: this.model.get( 'user_id' )
-				} ), {
-					success: function( model, response ) {
-						// Get the first activity and add it to the collection.
-						var published = _.extend( _.first( response ), { at: 0 } );
-						bp.ActivitesDePublications.activites.add( published );
-
-						// Make sure the paginate results are kept consistent.
-						if ( _.isUndefined( bp.ActivitesDePublications.activites.options.data.exclude ) ) {
-							bp.ActivitesDePublications.activites.options.data.exclude = [];
-						}
-
-						bp.ActivitesDePublications.activites.options.data.exclude.push( published.id );
-
-						// Reset the form
-						self.resetForm();
-					},
-					error: function( model, response ) {
-						if ( ! _.isUndefined( _activitesDePublicationSettings.errors[ response.responseJSON.code ] ) ) {
-							self.model.set( 'errors', { type: 'error', value: _activitesDePublicationSettings.errors[ response.responseJSON.code ] } );
+				// Set the content and meta
+				_.each( this.$el.serializeArray(), function( pair ) {
+					pair.name = pair.name.replace( '[]', '' );
+					if ( 'whats-new' === pair.name ) {
+						self.model.set( 'content', pair.value );
+					} else if ( -1 === _.indexOf( ['aw-whats-new-submit', 'whats-new-post-in'], pair.name ) ) {
+						if ( _.isUndefined( meta[ pair.name ] ) ) {
+							meta[ pair.name ] = pair.value;
 						} else {
-							self.model.set( 'errors', { type: 'error', value: response.responseJSON.message } );
+							if ( ! _.isArray( meta[ pair.name ] ) ) {
+								meta[ pair.name ] = [ meta[ pair.name ] ];
+							}
+
+							meta[ pair.name ].push( pair.value );
 						}
 					}
-				}
-			);
-		}
-	} );
+				} );
 
-	/**
-	 * Activity Post Form Avatar overrides.
-	 */
-	bp.Views.FormAvatar = postFormAvatar.extend( {
-		initialize: function() {
-			// Use Parent initializer.
-			postFormAvatar.prototype.initialize.apply( this, arguments );
+				// Silently add meta
+				this.model.set( meta, { silent: true } );
 
-			if ( this.model.get( 'display_avatar' ) ) {
-				this.el.className = 'comment-author vcard';
+				// Save the activity
+				activite.save(
+					_.extend( this.model.attributes, {
+						type: 'publication_activity',
+						'primary_item_id' : _activitesDePublicationSettings.primaryID,
+						'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
+						user: this.model.get( 'user_id' )
+					} ), {
+						success: function( model, response ) {
+							// Get the first activity and add it to the collection.
+							var published = _.extend( _.first( response ), { at: 0 } );
+							bp.ActivitesDePublications.activites.add( published );
+
+							// Make sure the paginate results are kept consistent.
+							if ( _.isUndefined( bp.ActivitesDePublications.activites.options.data.exclude ) ) {
+								bp.ActivitesDePublications.activites.options.data.exclude = [];
+							}
+
+							bp.ActivitesDePublications.activites.options.data.exclude.push( published.id );
+
+							// Reset the form
+							self.resetForm();
+						},
+						error: function( model, response ) {
+							if ( ! _.isUndefined( _activitesDePublicationSettings.errors[ response.responseJSON.code ] ) ) {
+								self.model.set( 'errors', { type: 'error', value: _activitesDePublicationSettings.errors[ response.responseJSON.code ] } );
+							} else {
+								self.model.set( 'errors', { type: 'error', value: response.responseJSON.message } );
+							}
+						}
+					}
+				);
 			}
-		}
-	} );
+		} );
 
-	/**
-	 * Activity Post Form Textarea overrides.
-	 */
-	bp.Views.WhatsNew = postFormTextarea.extend( {
-		initialize: function() {
-			this.el.placeholder = _activitesDePublicationSettings.textareaPlaceholder;
+		/**
+		 * Activity Post Form Avatar overrides.
+		 */
+		bp.Views.FormAvatar = postFormAvatar.extend( {
+			initialize: function() {
+				// Use Parent initializer.
+				postFormAvatar.prototype.initialize.apply( this, arguments );
 
-			// Use Parent initializer.
-			postFormTextarea.prototype.initialize.apply( this, arguments );
-		}
-	} );
+				if ( this.model.get( 'display_avatar' ) ) {
+					this.el.className = 'comment-author vcard';
+				}
+			}
+		} );
+
+		/**
+		 * Activity Post Form Textarea overrides.
+		 */
+		bp.Views.WhatsNew = postFormTextarea.extend( {
+			initialize: function() {
+				this.el.placeholder = _activitesDePublicationSettings.textareaPlaceholder;
+
+				// Use Parent initializer.
+				postFormTextarea.prototype.initialize.apply( this, arguments );
+			}
+		} );
+	} else {
+		// Feedback messages
+		bp.Views.activityFeedback = bp.View.extend( {
+			tagName  : 'div',
+			id       : 'message',
+			template : bp.template( 'activity-post-form-feedback' ),
+
+			initialize: function() {
+				this.model = new Backbone.Model();
+
+				if ( this.options.value ) {
+					this.model.set( 'message', this.options.value, { silent: true } );
+				}
+
+				this.type  = 'info';
+
+				if ( ! _.isUndefined( this.options.type ) && 'info' !== this.options.type ) {
+					this.type = this.options.type;
+				}
+
+				this.el.className = 'bp-messages bp-feedback ' + this.type ;
+			}
+		} );
+	}
 
 	/**
 	 * Activités de publication Loop's load more link.
@@ -373,28 +451,6 @@
 		BP_Nouveau.activity.strings.postUpdateButton = _activitesDePublicationSettings.publishLabel;
 	}
 
-	// Fetch the Activités de publication.
-	bp.ActivitesDePublications.activites.fetch( {
-		data: {
-			page: 1,
-			per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
-		},
-		success: function() {
-			bp.Nouveau.Activity.postForm.start();
-		},
-		error: function( collection, response ) {
-			if ( response.responseJSON && 'rest_authorization_required' === response.responseJSON.code ) {
-				var feedback = new bp.Views.activityFeedback( {
-					value: _activitesDePublicationSettings.mustLogIn,
-					type: 'info'
-				} );
-
-				// Inject the login feedback.
-				feedback.inject( '#activites-de-publication-list' );
-			}
-		}
-	} );
-
 	if ( $( '#activites-de-publication-nav' ).length ) {
 		var navToggle = new bp.Views.navToggle();
 
@@ -408,5 +464,26 @@
 
 	// Inject the Activités de publication main view.
 	activitesView.inject( '#activites-de-publication-list' );
+
+	// Fetch the Activités de publication.
+	bp.ActivitesDePublications.activites.fetch( {
+		data: {
+			page: 1,
+			per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
+		},
+		success: function() {
+			if ( postForm ) {
+				bp.Nouveau.Activity.postForm.start();
+			} else {
+				var feedback = new bp.Views.activityFeedback( {
+					value: _activitesDePublicationSettings.mustLogIn,
+					type: 'info'
+				} );
+
+				// Inject the login feedback.
+				feedback.prepend( '#activites-de-publication-list' );
+			}
+		}
+	} );
 
 } )( jQuery, _, window.bp || {}, window.wp || {} );
