@@ -24,7 +24,7 @@ function post_activities_admin_register_scripts() {
 		true
 	);
 }
-add_action( 'admin_enqueue_scripts', 'post_activities_admin_register_scripts', 7 );
+add_action( 'init', 'post_activities_admin_register_scripts', 7 );
 
 /**
  * Adds needed JavaScript to the loading queue.

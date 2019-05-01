@@ -20,21 +20,21 @@
 		$( '#comments' ).before( $( '<div></div>' ).prop( 'id', 'activites-de-publication-nav' ) );
 		$( '#activites-de-publication-nav' ).after(
 			$( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' )
-			                  .addClass( containerClass )
+			                  .addClass( containerClass + ' comments-area' )
 		);
 
 	// Container for the Activity post form (comments not allowed).
 	} else {
 		$( postContainer ).after(
 			$( '<div></div>' ).prop( 'id', 'bp-nouveau-activity-form' )
-			                  .addClass( containerClass )
+			                  .addClass( containerClass + ' comments-area' )
 		);
 	}
 
 	// Container for the list of Activités de publication for this Post.
 	$( '#bp-nouveau-activity-form' ).after(
 		$( '<div></div>' ).prop( 'id', 'activites-de-publication-list' )
-		                  .addClass( containerClass )
+		                  .addClass( containerClass + ' comments-area' )
 	);
 
 	/**

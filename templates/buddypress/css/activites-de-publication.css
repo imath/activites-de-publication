@@ -1,7 +1,7 @@
 /* Styles for the Post Form and Activity list */
 
 #bp-nouveau-activity-form {
-	padding-top: 2em;
+	margin-top: 2em;
 }
 
 #bp-nouveau-activity-form.hide,
@@ -156,10 +156,6 @@
 }
 
 @media screen and (min-width: 48em) {
-	#bp-nouveau-activity-form {
-		padding-top: 5em;
-	}
-
 	#whats-new-avatar.comment-author {
 		position: relative;
 	}
