@@ -1034,15 +1034,17 @@ class BP_REST_Activity_Endpoint extends WP_REST_Controller {
 			$retval = true;
 		}
 
-		// If activity is from a group, do an extra cap check.
-		if ( ! $retval && ! empty( $item_id ) && bp_is_active( $component ) && buddypress()->groups->id === $component ) {
-			// Group admins and mods have access as well.
-			if ( groups_is_user_admin( $user_id, $item_id ) || groups_is_user_mod( $user_id, $item_id ) ) {
-				$retval = true;
+		if ( ! is_null( $component ) ) {
+			// If activity is from a group, do an extra cap check.
+			if ( ! $retval && ! empty( $item_id ) && bp_is_active( $component ) && buddypress()->groups->id === $component ) {
+				// Group admins and mods have access as well.
+				if ( groups_is_user_admin( $user_id, $item_id ) || groups_is_user_mod( $user_id, $item_id ) ) {
+					$retval = true;
 
-				// User is a member of the group.
-			} elseif ( (bool) groups_is_user_member( $user_id, $item_id ) ) {
-				$retval = true;
+					// User is a member of the group.
+				} elseif ( (bool) groups_is_user_member( $user_id, $item_id ) ) {
+					$retval = true;
+				}
 			}
 		}
 
