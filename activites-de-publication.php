@@ -3,8 +3,8 @@
  * Plugin Name: Activités de Publication
  * Plugin URI: https://imathi.eu/tag/activites-de-publication/
  * Description: Utilisez les activités de BuddyPress pour dynamiser les conversations de vos publications WordPress.
- * Version: 1.0.4
- * Requires at least: 4.9.8
+ * Version: 2.0.0-alpha
+ * Requires at least: 5.0
  * Tested up to: 5.2
  * License: GPLv2 or later
  * Author: imath
@@ -66,7 +66,7 @@ final class Post_Activities {
 	 */
 	private function globals() {
 		// Version
-		$this->version = '1.0.4';
+		$this->version = '2.0.0-alpha';
 
 		// Domain
 		$this->domain = 'activites-de-publication';
@@ -83,9 +83,6 @@ final class Post_Activities {
 		$this->js_url     = trailingslashit( $this->url . 'js' );
 		$this->tpl_dir    = trailingslashit( $this->dir . 'templates' );
 		$this->tpl_url    = trailingslashit( $this->url . 'templates' );
-
-		// BP Rest
-		$this->bp_rest_is_enabled = class_exists( 'BP_REST_Activity_Endpoint', false );
 	}
 
 	/**
@@ -94,42 +91,17 @@ final class Post_Activities {
 	 * @since 1.0.0
 	 */
 	private function inc() {
-		// This plugin requires WordPress 4.9.8 & the BuddyPress Nouveau template pack.
-		if ( ! bp_is_active( 'activity' ) || ! function_exists( 'register_post_meta' ) || ! function_exists( 'bp_check_theme_template_pack_dependency' ) ) {
-			_doing_it_wrong( 'post_activities()', __( 'Cette extension nécessite à minima WordPress 4.9.8, BuddyPress 3.0 et requiert que le composant des activités soit actif.', 'activites-de-publication' ), '1.0.0' );
+		// This plugin requires WordPress 5.0.0 & the BuddyPress Nouveau template pack.
+		if ( ! bp_is_active( 'activity' ) || ! function_exists( 'render_block' ) || ! function_exists( 'bp_check_theme_template_pack_dependency' ) ) {
+			_doing_it_wrong( 'post_activities()', __( 'Cette extension nécessite à minima WordPress 5.0.0, BuddyPress 3.0 et requiert que le composant des activités soit actif.', 'activites-de-publication' ), '1.0.0' );
 			return;
 		}
-
-		spl_autoload_register( array( $this, 'autoload' ) );
 
 		require $this->inc_dir . 'functions.php';
 
 		if ( is_admin() ) {
 			require $this->inc_dir . 'admin.php';
 		}
-
-		if ( ! $this->bp_rest_is_enabled ) {
-			require $this->inc_dir . 'bp-rest-functions.php';
-		}
-	}
-
-	/**
-	 * Class Autoload function
-	 *
-	 * @since  1.0.0
-	 *
-	 * @param  string $class The class name.
-	 */
-	public function autoload( $class ) {
-		$name = str_replace( '_', '-', strtolower( $class ) );
-		$path = $this->inc_dir . "classes/class-{$name}.php";
-
-		// Sanity check.
-		if ( ! file_exists( $path ) || ( $this->bp_rest_is_enabled && 'BP_REST_Activity_Endpoint' === $class ) ) {
-			return;
-		}
-
-		require $path;
 	}
 }
 
