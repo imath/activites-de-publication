@@ -316,7 +316,7 @@ function post_activities_prepare_bp_activity_value( WP_REST_Response $response )
 		$response->data['user_link'] = apply_filters( 'bp_get_activity_user_link', bp_core_get_user_domain( $response->data['user_id'] ) );
 
 		// Add needed meta data
-		$timestamp = strtotime( $response->data['date'] );
+		$timestamp  = strtotime( $response->data['date'], current_time( 'mysql' ) ) + ( get_option( 'gmt_offset', 0 ) * HOUR_IN_SECONDS );
 		$response->data['human_date'] = sprintf(
 			__( '%1$s à %2$s', 'activites-de-publication' ),
 			date_i18n( get_option( 'date_format' ), $timestamp ),
