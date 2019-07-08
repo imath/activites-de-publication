@@ -119,7 +119,7 @@
 			}
 
 			if ( 'create' === method || 'update' === method ) {
-				return wp.apiRequest( options );
+				return bp.apiRequest( options );
 			}
 		}
 	} );
