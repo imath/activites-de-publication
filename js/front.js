@@ -166,7 +166,7 @@
 						return success.apply( this, arguments );
 					}
 				};
-				return wp.apiRequest( options );
+				return bp.apiRequest( options );
 			}
 		}
 	} );
