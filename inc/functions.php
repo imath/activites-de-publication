@@ -380,7 +380,7 @@ function post_activities_front_register_scripts() {
 		}
 	}
 
-	$dependencies = array( 'wp-api-request' );
+	$dependencies = array( 'bp-api-request' );
 	if ( ! is_user_logged_in() ) {
 		$dependencies = array_merge( array(
 			'bp-nouveau',
@@ -479,7 +479,7 @@ function post_activities_front_enqueue_scripts() {
 
 	wp_enqueue_script( 'activites-d-article-front-script' );
 	wp_localize_script( 'activites-d-article-front-script', '_activitesDePublicationSettings', array(
-		'versionString'     => 'buddypress/v1',
+		'versionString'     => sprintf( '%1$s/%2$s', bp_rest_namespace(), bp_rest_version() ),
 		'primaryID'         => get_current_blog_id(),
 		'secondaryID'       => $post->ID,
 		'hideSitewide'      => $hide_sitewide,
