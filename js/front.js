@@ -10,7 +10,7 @@
 		return;
 	}
 
-	var postForm, postContainer, activityContainer, postFormAvatar, postFormTextarea, containerClass = 'no-nav';
+	var postForm, postContainer, activityContainer, parentContainer, postFormAvatar, postFormTextarea, containerClass = 'no-nav';
 
 	if ( typeof bp.View === 'undefined' ) {
 		_.extend( bp, _.pick( wp, 'Backbone', 'ajax', 'template' ) );
@@ -87,6 +87,18 @@
 	// Container for the list of Activités de publication for this Post.
 	activityContainer.after(
 		$( '<div></div>' ).prop( 'id', 'activites-de-publication-list' )
+		                  .addClass( containerClass + ' comments-area' )
+	);
+	
+	// Container for the parent Activités de publication for the displayed activity comments.
+	if ( $( '#bp-nouveau-activity-form' ).length ) {
+		parentContainer = $( '#bp-nouveau-activity-form' );
+	} else {
+		parentContainer = $( '#activites-de-publication-list' );
+	}
+
+	parentContainer.before(
+		$( '<div></div>' ).prop( 'id', 'activites-de-publication-parent' )
 		                  .addClass( containerClass + ' comments-area' )
 	);
 
@@ -180,7 +192,20 @@
 				// Use Parent initializer.
 				postForm.prototype.initialize.apply( this, arguments );
 
+				this.options.displayedParent = bp.ActivitesDePublications.parentActivites;
+				this.options.postData        = this.getActiviteDePublicationData();
+
 				this.on( 'ready', this.bpMentionsRefresh, this );
+				this.options.displayedParent.on( 'reset', this.updatePlaceholder, this );
+			},
+
+			getActiviteDePublicationData: function() {
+				return {
+					type: 'publication_activity',
+					'primary_item_id' : _activitesDePublicationSettings.primaryID,
+					'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
+					user: this.model.get( 'user_id' )
+				}
 			},
 
 			bpMentionsRefresh: function() {
@@ -198,8 +223,7 @@
 					event.preventDefault();
 				}
 
-				var self = this, meta = {},
-					activite = new bp.Models.activite();
+				var self = this, meta = {}, activite = new bp.Models.activite();
 
 				// Set the content and meta
 				_.each( this.$el.serializeArray(), function( pair ) {
@@ -224,16 +248,17 @@
 
 				// Save the activity
 				activite.save(
-					_.extend( this.model.attributes, {
-						type: 'publication_activity',
-						'primary_item_id' : _activitesDePublicationSettings.primaryID,
-						'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
-						user: this.model.get( 'user_id' )
-					} ), {
+					_.extend( this.model.attributes, this.options.postData ), {
 						success: function( model, response ) {
 							// Get the first activity and add it to the collection.
 							var published = _.extend( _.first( response ), { at: 0 } );
 							bp.ActivitesDePublications.activites.add( published );
+
+							/**
+							 * 
+							 * @todo This excluding shouldn't be applied when posting a comment.
+							 * 
+							 */
 
 							// Make sure the paginate results are kept consistent.
 							if ( _.isUndefined( bp.ActivitesDePublications.activites.options.data.exclude ) ) {
@@ -254,6 +279,32 @@
 						}
 					}
 				);
+			},
+
+			updatePlaceholder: function( collection ) {
+				var placeholder;
+
+				if ( collection.models && collection.models.length === 1 ) {
+					var parent    = _.first( collection.models ),
+					    parent_id = parent.get( 'id' );
+					
+					_.extend( this.options.postData, {
+						type: 'activity_comment',
+						'primary_item_id' : parent_id,
+						'secondary_item_id' : parent_id
+					} );
+
+					placeholder = _activitesDePublicationSettings.textareaPlaceholderAlt.replace( '%s', parent.get( 'user_name' ) );
+				} else {
+					this.options.postData = this.getActiviteDePublicationData();
+					placeholder           = _activitesDePublicationSettings.textareaPlaceholder;
+				}
+
+				_.each( this.views._views[''], function( view ) {
+					if ( 'whats-new-content' === $( view.el ).prop( 'id' ) ) {
+						$( view.el ).find( 'textarea[name="whats-new"]').prop( 'placeholder', placeholder );
+					}
+				} );
 			}
 		} );
 
@@ -362,6 +413,7 @@
 
 			this.collection.on( 'add', this.addActiviteView, this );
 			this.collection.on( 'sync', this.detachFeedback, this );
+			this.collection.on( 'reset', this.resetQuery, this );
 		},
 
 		addActiviteView: function( activite ) {
@@ -373,7 +425,7 @@
 			}
 
 			this.removeInfos();
-			this.views.add( new bp.Views.Activite( { model: activite } ), options );
+			this.views.add( new bp.Views.Activite( { model: activite, parents: this.options.parents } ), options );
 		},
 
 		attachFeedback: function( message ) {
@@ -425,10 +477,53 @@
 				this.collection.fetch( {
 					data: {
 						page: nextPage,
-						per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
+						per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 ),
+						display_comments: true
 					}
 				} );
 			}
+		},
+
+		resetQuery: function( collection, options ) {
+			var data = {
+				page: 1,
+				per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
+			};
+
+			if ( options.parent && null !== options.parent ) {
+				this.attachFeedback( _activitesDePublicationSettings.loadingReplies );
+				_.extend( data, {
+					type: 'activity_comment',
+					'primary_id': options.parent,
+					'secondary_id': options.parent
+				} );
+			} else {
+				this.attachFeedback( _activitesDePublicationSettings.loadingConversations );
+				_.extend( data, {
+					type: 'publication_activity',
+					'primary_id' : _activitesDePublicationSettings.primaryID,
+					'secondary_id' : _activitesDePublicationSettings.secondaryID,
+					'display_comments': true
+				} );
+			}
+
+			collection.fetch( { data: data } );
+		}
+	} );
+
+	bp.Views.parentActivite = bp.Views.Activites.extend( {
+		id: 'parent-activite',
+
+		initialize: function() {
+			this.collection.on( 'reset', this.showParentActivite, this );
+		},
+
+		showParentActivite: function( parents ) {
+			if ( ! parents.models.length ) {
+				return;
+			}
+
+			this.views.add( new bp.Views.Activite( { model: _.first( parents.models ), children: this.options.children } ) );
 		}
 	} );
 
@@ -438,12 +533,46 @@
 	bp.Views.Activite = bp.View.extend( {
 		tagName  : 'li',
 		template : bp.template( 'activites-de-publication' ),
-		className: 'comment depth-1'
+		className: 'comment depth-1',
+
+		events: {
+			'click .activite-de-publication-action' : 'fetchActivityComments',
+			'click #back-to-all-activites-de-publication' : 'backToAllActivites'
+		},
+
+		initialize: function() {
+			this.model.collection.on( 'reset', this.cleanView, this );
+		},
+
+		fetchActivityComments: function( event ) {
+			event.preventDefault();
+
+			var parent = this.model.clone(), action = $( event.currentTarget ).data( 'action' );
+
+			// Make sure to avoid displaying action buttons.
+			parent.set( { parentActivite: true }, { silent: true } );
+
+			// Reset collections to clean views and query activity comments.
+			this.options.parents.reset( [ parent ], { action: action } );
+			this.model.collection.reset( null, { parent: this.model.get( 'id' ) } );
+		},
+
+		cleanView: function() {
+			this.views.view.remove();
+		},
+
+		backToAllActivites: function( event ) {
+			event.preventDefault();
+			
+			this.model.collection.reset( null );
+			this.options.children.reset( null, { parent: null } );
+		}
 	} );
 
 	// Globalize the Collection.
 	bp.ActivitesDePublications = {
-		activites: new bp.Collections.activites()
+		activites: new bp.Collections.activites(),
+		parentActivites: new bp.Collections.activites(),
 	};
 
 	// BP String overrides
@@ -459,17 +588,27 @@
 	}
 
 	var activitesView = new bp.Views.Activites( {
-		collection: bp.ActivitesDePublications.activites
+		collection: bp.ActivitesDePublications.activites,
+		parents: bp.ActivitesDePublications.parentActivites
 	} );
 
 	// Inject the Activités de publication main view.
 	activitesView.inject( '#activites-de-publication-list' );
 
+	var parentActivitesView = new bp.Views.parentActivite( {
+		collection: bp.ActivitesDePublications.parentActivites,
+		children: bp.ActivitesDePublications.activites
+	} );
+
+	// Inject the Activités de publication main view.
+	parentActivitesView.inject( '#activites-de-publication-parent' );
+
 	// Fetch the Activités de publication.
 	bp.ActivitesDePublications.activites.fetch( {
 		data: {
 			page: 1,
-			per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
+			per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 ),
+			'display_comments': true
 		},
 		success: function() {
 			if ( postForm ) {

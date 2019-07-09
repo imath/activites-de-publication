@@ -43,6 +43,31 @@
 			{{{data.content.rendered}}}
 		</div>
 	</article>
+
+	<# if ( ! data.parentActivite && ! data.parent ) { #>
+		<div class="comment-reply">
+			<# if ( data.comment_count ) { #>
+				<a rel="nofollow" class="comment-reply-link activite-de-publication-action" href="#view-replies/{{data.id}}" data-parent-id="{{data.id}}" data-action="view">
+					<# if ( parseInt( data.comment_count, 10 ) === 1 ) { #>
+						<?php esc_html_e( 'Lire la réponse', 'activites-de-publication' ); ?>
+					<# } else { #>
+						<# var commentString = "<?php esc_html_e( 'Lire les %s réponses', 'activites-de-publication' ); ?>"; #>
+						<# print( commentString.replace( '%s', data.comment_count ) ); #>
+					<# } #>
+				</a>
+			<# } #>
+
+			<?php if ( is_user_logged_in() ) :?>
+				<a rel="nofollow" class="comment-reply-link activite-de-publication-action" href="#reply/{{data.id}}" data-parent-id="{{data.id}}" data-action="reply"><?php esc_html_e( 'Répondre', 'activites-de-publication' ); ?></a>
+			<?php endif ; ?>
+		</div>
+	<# } #>
+
+	<# if ( data.parentActivite ) { #>
+		<div class="comment-reply">
+			<a crel="nofollow" class="comment-reply-link" href="#view-all" id="back-to-all-activites-de-publication"><?php esc_html_e( 'Revenir sur toutes les conversations', 'activites-de-publication' ); ?></a>
+		</div>
+	<# } #>
 </script>
 
 <script type="text/html" id="tmpl-plus-d-activites-de-publication">
