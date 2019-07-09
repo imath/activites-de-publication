@@ -323,6 +323,11 @@ function post_activities_prepare_bp_activity_value( WP_REST_Response $response )
 			date_i18n( get_option( 'time_format' ), $timestamp )
 		);
 
+		// Make sure the comment count property is fetched.
+		if ( ! isset( $response->data['comment_count'] ) ) {
+			$response->data['comment_count'] = 0;
+		}
+
 		if ( bp_current_user_can( 'bp_moderate' ) ) {
 			$response->data['edit_link'] = esc_url_raw( post_activities_get_activity_edit_link( $response->data['id'] ) );
 		}
@@ -496,13 +501,15 @@ function post_activities_front_enqueue_scripts() {
 
 		'mustLogIn'         => sprintf(
 			/* translators: %s: login URL */
-			__( 'Vous devez <a href="%s">être connecté·e</a> publier des conversations.', 'activites-de-publication' ),
+			__( 'Vous devez <a href="%s">être connecté·e</a> pour publier ou répondre à des conversations.', 'activites-de-publication' ),
 			wp_login_url( apply_filters( 'the_permalink', get_permalink( $post->ID ), $post->ID ) )
 		),
-		'publishLabel'         => __( 'Publier', 'activites-de-publication' ),
-		'textareaPlaceholder'  => __( 'Participez aux conversations !', 'activites-de-publication' ),
-		'loadingConversations' => __( 'Merci de patienter pendant le chargement des conversations.', 'activites-de-publication' ),
-		'noConversations'      => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-de-publication' ),
+		'publishLabel'            => __( 'Publier', 'activites-de-publication' ),
+		'textareaPlaceholder'     => __( 'Participez aux conversations !', 'activites-de-publication' ),
+		'textareaPlaceholderAlt'  => __( 'Répondez à %s !', 'activites-de-publication' ),
+		'loadingConversations'    => __( 'Merci de patienter pendant le chargement de la ou des conversations.', 'activites-de-publication' ),
+		'loadingReplies'          => __( 'Merci de patienter pendant le chargement de la ou des réponses.', 'activites-de-publication' ),
+		'noConversations'         => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-de-publication' ),
 		'errors' => array(
 			'rest_authorization_required'        => __( 'Désolé, vous n’êtes pas autorisé·e à consulter les activités de cette publication.', 'activites-de-publication' ),
 			'rest_user_cannot_create_activity'   => __( 'Désolé, nous ne sommes pas en mesure de créer cette activité de publication.', 'activites-de-publication' ),
