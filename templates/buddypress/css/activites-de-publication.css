@@ -5,7 +5,8 @@
 }
 
 #bp-nouveau-activity-form.hide,
-#activites-de-publication-list.hide {
+#activites-de-publication-list.hide,
+#activites-de-publication-parent.hide {
 	display: none;
 }
 
