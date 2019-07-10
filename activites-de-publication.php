@@ -91,9 +91,9 @@ final class Post_Activities {
 	 * @since 1.0.0
 	 */
 	private function inc() {
-		// This plugin requires WordPress 5.0.0 & the BuddyPress Nouveau template pack.
-		if ( ! bp_is_active( 'activity' ) || ! function_exists( 'render_block' ) || ! function_exists( 'bp_check_theme_template_pack_dependency' ) ) {
-			_doing_it_wrong( 'post_activities()', __( 'Cette extension nécessite à minima WordPress 5.0.0, BuddyPress 3.0 et requiert que le composant des activités soit actif.', 'activites-de-publication' ), '1.0.0' );
+		// This plugin requires WordPress 5.0.0 & BuddyPress 5.0.0.
+		if ( ! bp_is_active( 'activity' ) || ! function_exists( 'render_block' ) || ! function_exists( 'bp_rest_api_is_available' ) ) {
+			_doing_it_wrong( 'post_activities()', __( 'Cette extension nécessite à minima WordPress 5.0.0, BuddyPress 5.0.0 et requiert que le composant des activités soit actif.', 'activites-de-publication' ), '1.0.0' );
 			return;
 		}
 

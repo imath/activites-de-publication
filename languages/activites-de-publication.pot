@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Activités de Publication 2.0.0-beta\n"
 "Report-Msgid-Bugs-To: "
 "https://github.com/imath/activites-de-publication/issues\n"
-"POT-Creation-Date: 2019-07-10 13:43:51+00:00\n"
+"POT-Creation-Date: 2019-07-10 15:39:37+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -16,7 +16,7 @@ msgstr ""
 
 #: activites-de-publication.php:96
 msgid ""
-"Cette extension nécessite à minima WordPress 5.0.0, BuddyPress 3.0 et "
+"Cette extension nécessite à minima WordPress 5.0.0, BuddyPress 5.0.0 et "
 "requiert que le composant des activités soit actif."
 msgstr ""
 
