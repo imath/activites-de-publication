@@ -60,6 +60,16 @@
 					<a rel="nofollow" class="comment-reply-link activite-de-publication-action" href="#reply/{{data.id}}" data-parent-id="{{data.id}}" data-action="reply"><?php esc_html_e( 'Répondre', 'activites-de-publication' ); ?></a>
 				<?php endif ; ?>
 			<# } #>
+
+			<?php if ( bp_activity_can_favorite() && is_user_logged_in() ) :?>
+				<a rel="nofollow" class="comment-reply-link activite-de-publication-favorite" href="#favorite/{{data.id}}" data-parent-id="{{data.id}}">
+					<# if ( data.favorited ) { #>
+						<?php esc_html_e( 'Retirer de mes favoris', 'activites-de-publication' ); ?>
+					<# } else { #>
+						<?php esc_html_e( 'Ajouter à mes favoris', 'activites-de-publication' ); ?>
+					<# } #>
+				</a>
+			<?php endif ; ?>
 		</div>
 	<# } #>
 
