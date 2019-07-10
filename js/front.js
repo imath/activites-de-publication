@@ -557,6 +557,7 @@
 
 		initialize: function() {
 			this.model.collection.on( 'reset', this.cleanView, this );
+			this.on( 'ready', this.scrollTo, this );
 		},
 
 		fetchActivityComments: function( event ) {
@@ -586,6 +587,22 @@
 			
 			this.model.collection.reset( null );
 			this.options.children.reset( null, { parent: null } );
+		},
+
+		/**
+		 * Make sure to scrollTo the displayed parent activity.
+		 */
+		scrollTo: function() {
+			if ( ! this.options.children ) {
+				return;
+			}
+
+			var to = $('#activites-de-publication-parent').offset().top;
+			if ( $( '#wpadminbar').length ) {
+				to -= $( '#wpadminbar').height();
+			}
+
+			window.scrollTo( 0, to );
 		}
 	} );
 
