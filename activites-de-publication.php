@@ -3,7 +3,7 @@
  * Plugin Name: Activités de Publication
  * Plugin URI: https://imathi.eu/tag/activites-de-publication/
  * Description: Utilisez les activités de BuddyPress pour dynamiser les conversations de vos publications WordPress.
- * Version: 2.0.0-alpha
+ * Version: 2.0.0-beta
  * Requires at least: 5.0
  * Tested up to: 5.2
  * License: GPLv2 or later
@@ -66,7 +66,7 @@ final class Post_Activities {
 	 */
 	private function globals() {
 		// Version
-		$this->version = '2.0.0-alpha';
+		$this->version = '2.0.0-beta';
 
 		// Domain
 		$this->domain = 'activites-de-publication';
