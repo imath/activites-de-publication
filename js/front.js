@@ -134,6 +134,35 @@
 			if ( 'create' === method || 'update' === method ) {
 				return bp.apiRequest( options );
 			}
+		},
+
+		updateFavorite: function( options ) {
+			var links = this.get( '_links' ), self = this, success = options.success;
+			options  = options || {};
+			options.context = this;
+			_.extend( options, this.options );
+
+			// We will not use the regular path.
+			delete options.path;
+
+			if ( ! links.favorite || links.favorite.length < 1 ) {
+				return false;
+			}
+
+			// Instead of the path, use the favorite route.
+			options.url = _.first( links.favorite ).href;
+
+			options.success = function( data ) {
+				if ( data ) {
+					self.set( { favorited: _.first( data ).favorited } );
+				}
+
+				if ( success ) {
+					return success.apply( this, arguments );
+				}
+			};
+
+			return bp.apiRequest( options );
 		}
 	} );
 
@@ -552,6 +581,7 @@
 
 		events: {
 			'click .activite-de-publication-action' : 'fetchActivityComments',
+			'click .activite-de-publication-favorite' : 'favUnfav',
 			'click #back-to-all-activites-de-publication' : 'backToAllActivites'
 		},
 
@@ -576,6 +606,26 @@
 			} else {
 				bp.ActivitesDePublications.activites.reset( null, { parent: this.model.get( 'id' ) } );
 			}
+		},
+
+		favUnfav: function( event ) {
+			event.preventDefault();
+
+			var self = this;
+
+			if ( ! self.model.get( 'favoriting' ) ) {
+				self.model.set( { favoriting: true }, { silent: true } );
+
+				this.model.updateFavorite( {
+					success: function() {
+						self.model.unset( 'favoriting', { silent: true } );
+
+						// Re-render the view to take the change in account.
+						self.render();
+					}
+				} );
+			}
+			
 		},
 
 		cleanView: function() {

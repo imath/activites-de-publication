@@ -788,7 +788,7 @@ function post_activities_get_nouveau_activity_entry_buttons( &$buttons = array()
 		// Get the delete button to readd after the edit one.
 		$delete_button = $buttons['activity_delete'];
 
-		unset( $buttons['activity_favorite'], $buttons['activity_delete'] );
+		unset( $buttons['activity_delete'] );
 		$button_text = __( 'Modifier', 'activites-de-publication' );
 
 		if ( bp_current_user_can( 'bp_moderate' ) ) {
@@ -821,6 +821,7 @@ add_filter( 'bp_nouveau_return_activity_entry_buttons', 'post_activities_get_nou
  * Overrides the BuddyPress check for the favorite cap.
  *
  * @since  1.0.0
+ * @deprecated 2.0.0
  *
  * @param  boolean                     $can_favorite Wether the user can favorite the activity or not.
  * @param  BP_Activity_Activity|object $activity     The activity object.
@@ -828,19 +829,8 @@ add_filter( 'bp_nouveau_return_activity_entry_buttons', 'post_activities_get_nou
  *                                                   False otherwise.
  */
 function post_activities_can_favorite( $can_favorite = true, $activity = null ) {
-	if ( 'nouveau' === bp_get_theme_compat_id() ) {
-		return $can_favorite;
-	}
-
-	$type = post_activities_get_activity_type( $activity );
-
-	if ( 'publication_activity' === $type ) {
-		$can_favorite = false;
-	}
-
-	return $can_favorite;
+	_deprecated_function( __FUNCTION__, '2.0.0' );
 }
-add_filter( 'bp_activity_can_favorite', 'post_activities_can_favorite', 20, 1 );
 
 /**
  * Overrides the activity permalink for Activités de publication.
