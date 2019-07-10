@@ -413,10 +413,12 @@
 			if ( 'conversations' === $( event.currentTarget ).data( 'type' ) ) {
 				$( '#bp-nouveau-activity-form' ).removeClass( 'hide' );
 				$( '#activites-de-publication-list' ).removeClass( 'hide' );
+				$( '#activites-de-publication-parent' ).removeClass( 'hide' );
 				$( '#comments' ).hide();
 			} else {
 				$( '#bp-nouveau-activity-form' ).addClass( 'hide' );
 				$( '#activites-de-publication-list' ).addClass( 'hide' );
+				$( '#activites-de-publication-parent' ).addClass( 'hide' );
 				$( '#comments' ).show();
 			}
 		}
