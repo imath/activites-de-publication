@@ -510,6 +510,7 @@ function post_activities_front_enqueue_scripts() {
 		'loadingConversations'    => __( 'Merci de patienter pendant le chargement de la ou des conversations.', 'activites-de-publication' ),
 		'loadingReplies'          => __( 'Merci de patienter pendant le chargement de la ou des réponses.', 'activites-de-publication' ),
 		'noConversations'         => __( 'Aucune conversation initiée, soyez le premier à en démarrer une !', 'activites-de-publication' ),
+		'noReplies'               => __( 'Aucune réponse pour le moment, soyez le premier à réagir !', 'activites-de-publication' ),
 		'errors' => array(
 			'rest_authorization_required'        => __( 'Désolé, vous n’êtes pas autorisé·e à consulter les activités de cette publication.', 'activites-de-publication' ),
 			'rest_user_cannot_create_activity'   => __( 'Désolé, nous ne sommes pas en mesure de créer cette activité de publication.', 'activites-de-publication' ),
