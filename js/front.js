@@ -10,7 +10,8 @@
 		return;
 	}
 
-	var postForm, postContainer, activityContainer, parentContainer, postFormAvatar, postFormTextarea, containerClass = 'no-nav';
+	var postForm, postContainer, activityContainer, parentContainer, postFormAvatar, postFormTextarea, containerClass = 'no-nav',
+	    excludedActivities = [];
 
 	if ( typeof bp.View === 'undefined' ) {
 		_.extend( bp, _.pick( wp, 'Backbone', 'ajax', 'template' ) );
@@ -164,6 +165,12 @@
 				options.data.hidden = 1;
 			}
 
+			if ( excludedActivities.length > 0 ) {
+				options.data.exclude = excludedActivities;
+			} else if ( options.data.exclude ) {
+				delete options.data.exclude;
+			}
+
 			if ( 'read' === method ) {
 				var self = this, success = options.success;
 				options.success = function( data, textStatus, request ) {
@@ -254,18 +261,8 @@
 							var published = _.extend( _.first( response ), { at: 0 } );
 							bp.ActivitesDePublications.activites.add( published );
 
-							/**
-							 * 
-							 * @todo This excluding shouldn't be applied when posting a comment.
-							 * 
-							 */
-
 							// Make sure the paginate results are kept consistent.
-							if ( _.isUndefined( bp.ActivitesDePublications.activites.options.data.exclude ) ) {
-								bp.ActivitesDePublications.activites.options.data.exclude = [];
-							}
-
-							bp.ActivitesDePublications.activites.options.data.exclude.push( published.id );
+							excludedActivities.push( published.id );
 
 							// Reset the form
 							self.resetForm();
@@ -446,6 +443,14 @@
 			} );
 		},
 
+		removePaginationLink: function() {
+			_.each( this.views._views[''], function( view ) {
+				if ( view.model.get( 'nextPage' ) ) {
+					view.remove();
+				}
+			} );
+		},
+
 		detachFeedback: function( collection ) {
 			this.removeInfos();
 
@@ -456,7 +461,13 @@
 			}
 
 			if ( 0 === collection.length ) {
-				this.attachFeedback( _activitesDePublicationSettings.noConversations );
+				var feedback = _activitesDePublicationSettings.noConversations;
+
+				if ( ! _.isUndefined( collection.options.data.type ) && 'activity_comment' === collection.options.data.type ) {
+					feedback = _activitesDePublicationSettings.noReplies;
+				}
+
+				this.attachFeedback( feedback );
 			}
 		},
 
@@ -465,11 +476,8 @@
 
 			var nextPage = $( event.currentTarget ).data( 'next-page' );
 
-			_.each( this.views._views[''], function( view ) {
-				if ( view.model.get( 'nextPage' ) ) {
-					view.remove();
-				}
-			} );
+			// Remove the pagination link.
+			this.removePaginationLink();
 
 			if ( nextPage ) {
 				this.attachFeedback();
@@ -487,8 +495,12 @@
 		resetQuery: function( collection, options ) {
 			var data = {
 				page: 1,
-				per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 )
+				per_page: parseInt( _activitesDePublicationSettings.activitiesPerPage, 10 ),
+				'display_comments': true
 			};
+
+			// Remove the pagination link.
+			this.removePaginationLink();
 
 			if ( options.parent && null !== options.parent ) {
 				this.attachFeedback( _activitesDePublicationSettings.loadingReplies );
@@ -502,11 +514,14 @@
 				_.extend( data, {
 					type: 'publication_activity',
 					'primary_id' : _activitesDePublicationSettings.primaryID,
-					'secondary_id' : _activitesDePublicationSettings.secondaryID,
-					'display_comments': true
+					'secondary_id' : _activitesDePublicationSettings.secondaryID
 				} );
 			}
 
+			// Reset the excluded Activities
+			excludedActivities = [];
+
+			// Fetch Activities or Activity comments.
 			collection.fetch( { data: data } );
 		}
 	} );
@@ -554,7 +569,12 @@
 
 			// Reset collections to clean views and query activity comments.
 			this.options.parents.reset( [ parent ], { action: action } );
-			this.model.collection.reset( null, { parent: this.model.get( 'id' ) } );
+
+			if ( this.model.collection ) {
+				this.model.collection.reset( null, { parent: this.model.get( 'id' ) } );
+			} else {
+				bp.ActivitesDePublications.activites.reset( null, { parent: this.model.get( 'id' ) } );
+			}
 		},
 
 		cleanView: function() {
