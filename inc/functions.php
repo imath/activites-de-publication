@@ -616,11 +616,10 @@ function post_activities_js_templates( $content = '' ) {
 }
 
 /**
- * Use a specific activity/entry template for the Activités de Publication activities.
- *
- * NB: This is used to make sure there are no other button actions than the edit one.
+ * Cache the de Publication activities IDs when the activity/entry template is used.
  *
  * @since  1.0.0
+ * @since  2.0.0 Change the function role: it no more uses a specific template but caches activity IDs.
  *
  * @param  array  $templates The list of possible templates for the slug.
  * @param  string $slug      The slug of the requested template.
@@ -631,16 +630,14 @@ function post_activities_get_activity_entry_template_part( $templates = array(),
 		return $templates;
 	}
 
-	// Temporarly overrides the BuddyPress Template Stack.
-	add_filter( 'bp_get_template_stack', 'post_activities_get_template_stack' );
-
-	// Use a specific template for the active template pack
-	$theme_compat_id = bp_get_theme_compat_id();
-	if ( 'nouveau' !== $theme_compat_id && 'legacy' !== $theme_compat_id ) {
-		$theme_compat_id = 'legacy';
+	$pa = post_activities();
+	if ( ! isset( $pa->displayed_parents ) ) {
+		$pa->displayed_parents = array( bp_get_activity_id() );
+	} else {
+		$pa->displayed_parents[] = bp_get_activity_id();
 	}
 
-	return array_merge( array( "activity/entry-{$theme_compat_id}.php" ), $templates );
+	return $templates;
 }
 add_filter( 'bp_get_template_part', 'post_activities_get_activity_entry_template_part', 10, 2 );
 
@@ -648,38 +645,25 @@ add_filter( 'bp_get_template_part', 'post_activities_get_activity_entry_template
  * Removes the temporary filter used to override the activity/entry template.
  *
  * @since  1.0.0
+ * @deprecated 2.0.0
  *
  * @param  string $located The located template.
  */
 function post_activities_located_entry_template_part( $located = '' ) {
-	if ( false !== strpos( $located, 'activity/entry' ) ) {
-		remove_filter( 'bp_get_template_stack', 'post_activities_get_template_stack' );
-	}
+	_deprecated_function( __FUNCTION__, '2.0.0' );
 }
-add_action( 'bp_locate_template', 'post_activities_located_entry_template_part', 10, 1 );
 
 /**
  * Gets the activity id.
  *
  * @since  1.0.0
+ * @deprecated 2.0.0
  *
  * @param  BP_Activity_Activity|object $activity The activity object.
  * @return integer                               The activity id.
  */
 function post_activities_get_activity_id( $activity = null ) {
-	$id = '';
-
-	if ( empty( $activity->id ) ) {
-		global $activities_template;
-
-		if ( isset( $activities_template->activity->id ) ) {
-			$id = $activities_template->activity->id;
-		}
-	} else {
-		$id = $activity->id;
-	}
-
-	return (int) $id;
+	_deprecated_function( __FUNCTION__, '2.0.0' );
 }
 
 /**
@@ -710,6 +694,7 @@ function post_activities_get_activity_type( $activity = null ) {
  * Overrides the BuddyPress check for the delete cap.
  *
  * @since  1.0.0
+ * @deprecated 2.0.0
  *
  * @param  boolean                     $can_delete Wether the user can delete the activity or not.
  * @param  BP_Activity_Activity|object $activity   The activity object.
@@ -717,20 +702,14 @@ function post_activities_get_activity_type( $activity = null ) {
  *                                                 False otherwise.
  */
 function post_activities_can_delete( $can_delete = false, $activity = null ) {
-	$type = post_activities_get_activity_type( $activity );
-
-	if ( 'publication_activity' === $type ) {
-		$can_delete = bp_current_user_can( 'bp_moderate' );
-	}
-
-	return $can_delete;
+	_deprecated_function( __FUNCTION__, '2.0.0' );
 }
-add_filter( 'bp_activity_user_can_delete', 'post_activities_can_delete', 20, 2 );
 
 /**
  * Overrides the BuddyPress check for the comment cap.
  *
  * @since  1.0.0
+ * @deprecated 2.0.0
  *
  * @param  boolean $can_comment Wether the user can comment the activity or not.
  * @param  string  $type        The activity type.
@@ -738,41 +717,51 @@ add_filter( 'bp_activity_user_can_delete', 'post_activities_can_delete', 20, 2 )
  *                              False otherwise.
  */
 function post_activities_can_comment( $can_comment = false, $type = '' ) {
-	if ( 'publication_activity' === $type ) {
-		$can_comment = false;
+	_deprecated_function( __FUNCTION__, '2.0.0' );
+}
+
+/**
+ * Overrides the BuddyPress check for the comment replies cap.
+ *
+ * @since  1.0.0
+ *
+ * @param  boolean               $can_reply Wether the user can reply the activity or not.
+ * @param  BP_Activity_Activity  $type      The activity type.
+ * @return boolean                True if the user can reply to the comment.
+ *                                False otherwise.
+ */
+function post_activities_can_reply( $can_reply = false, $comment = '' ) {
+	$pa        = post_activities();
+	$parent_id = 0;
+	if ( isset( $comment->item_id ) ) {
+		$parent_id = (int) $comment->item_id;
 	}
 
-	return $can_comment;
+	if ( $parent_id && isset( $pa->displayed_parents ) && in_array( $parent_id, $pa->displayed_parents, true ) ) {
+		$can_reply = false;
+	}
+
+	return $can_reply;
 }
-add_filter( 'bp_activity_can_comment', 'post_activities_can_comment', 10, 2 );
+add_filter( 'bp_activity_can_comment_reply', 'post_activities_can_reply', 10, 2 );
 
 /**
  * Gets the URL of the BuddyPress delete link.
  *
  * @since  1.0.0
+ * @deprecated 2.0.0
  *
  * @return string The URL of the BuddyPress delete link.
  */
 function post_activities_get_delete_activity_url() {
-	global $activities_template;
-
-	if ( ! isset( $activities_template->activity ) ) {
-		return '';
-	}
-
-	$delete_url = bp_get_activity_delete_url();
-
-	if ( bp_is_activity_component() && is_numeric( bp_current_action() ) ) {
-		$delete_url = str_replace( '&amp;', '&#038;', $delete_url );
-	}
-
-	return $delete_url;
+	_deprecated_function( __FUNCTION__, '2.0.0' );
 }
 
 /**
  * Overrides the link to delete the activity.
  *
  * @since  1.0.0
+ * @deprecated 2.0.0
  *
  * @param  string                      $delete_link The activity delete link.
  * @param  BP_Activity_Activity|object $activity    The activity object.
@@ -780,31 +769,8 @@ function post_activities_get_delete_activity_url() {
  *                                                  from the WordPress Administration.
  */
 function post_activities_moderate_link( $delete_link = '', $activity = null ) {
-	if ( 'nouveau' === bp_get_theme_compat_id() ) {
-		return $delete_link;
-	}
-
-	$id   = post_activities_get_activity_id( $activity );
-	$type = post_activities_get_activity_type( $activity );
-
-	if ( 'publication_activity' !== $type || ! $id ) {
-		return $delete_link;
-	}
-
-	return str_replace( array(
-		post_activities_get_delete_activity_url(),
-		/* translators: already translated for BuddyPress */
-		__( 'Delete', 'buddypress' ),
-		' confirm',
-		'delete-activity'
-	), array(
-		esc_url( post_activities_get_activity_edit_link( $id ) ),
-		__( 'Modifier', 'activites-de-publication' ),
-		'',
-		'edit-activity',
-	), $delete_link );
+	_deprecated_function( __FUNCTION__, '2.0.0' );
 }
-add_filter( 'bp_get_activity_delete_link', 'post_activities_moderate_link', 10, 1 );
 
 /**
  * Overrides BP Nouveau action buttons for the Activités de publication.
@@ -816,24 +782,35 @@ add_filter( 'bp_get_activity_delete_link', 'post_activities_moderate_link', 10, 
  * @return array            The list of buttons.
  */
 function post_activities_get_nouveau_activity_entry_buttons( &$buttons = array(), $id = 0 ) {
-	if ( 'publication_activity' !== bp_get_activity_type() ) {
-		return $buttons;
-	}
+	$pa = post_activities();
 
-	unset( $buttons['activity_favorite'] );
+	if ( isset( $pa->displayed_parents ) && in_array( $id, $pa->displayed_parents, true ) ) {
+		// Get the delete button to readd after the edit one.
+		$delete_button = $buttons['activity_delete'];
 
-	if ( ! empty( $buttons['activity_delete'] ) && $id ) {
-		$buttons['activity_delete'] = str_replace( array(
-			post_activities_get_delete_activity_url(),
-			' confirm',
-			'delete-activity',
-			'<span class="bp-screen-reader-text"></span>'
-		), array(
-			esc_url( post_activities_get_activity_edit_link( $id ) ),
-			'',
-			'edit-activity',
-			__( 'Modifier', 'activites-de-publication' )
-		), $buttons['activity_delete'] );
+		unset( $buttons['activity_favorite'], $buttons['activity_delete'] );
+		$button_text = __( 'Modifier', 'activites-de-publication' );
+
+		if ( bp_current_user_can( 'bp_moderate' ) ) {
+			$buttons['activity_edit'] = bp_get_button( array(
+				'id'                => 'activity_edit',
+				'position'          => 30,
+				'component'         => 'activity',
+				'parent_element'    => '',
+				'parent_attr'       => array(),
+				'must_be_logged_in' => true,
+				'button_element'    => 'a',
+				'button_attr'       => array(
+					'id'              => sprintf( 'activity-edit-%d', $id ),
+					'href'            => esc_url( post_activities_get_activity_edit_link( $id ) ),
+					'class'           => 'button bp-secondary-action bp-tooltip',
+					'data-bp-tooltip' => esc_attr( $button_text ),
+				),
+				'link_text'  => sprintf( '<span class="dashicons dashicons-edit"></span><span class="bp-screen-reader-text">%s</span>', esc_html( $button_text ) ),
+			) );
+		}
+
+		$buttons['activity_delete'] = $delete_button;
 	}
 
 	return $buttons;
