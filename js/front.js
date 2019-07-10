@@ -241,7 +241,7 @@
 					'primary_item_id' : _activitesDePublicationSettings.primaryID,
 					'secondary_item_id' : _activitesDePublicationSettings.secondaryID,
 					user: this.model.get( 'user_id' )
-				}
+				};
 			},
 
 			bpMentionsRefresh: function() {
@@ -661,7 +661,7 @@
 	// Globalize the Collection.
 	bp.ActivitesDePublications = {
 		activites: new bp.Collections.activites(),
-		parentActivites: new bp.Collections.activites(),
+		parentActivites: new bp.Collections.activites()
 	};
 
 	// BP String overrides
