@@ -90,7 +90,7 @@
 		$( '<div></div>' ).prop( 'id', 'activites-de-publication-list' )
 		                  .addClass( containerClass + ' comments-area' )
 	);
-	
+
 	// Container for the parent Activités de publication for the displayed activity comments.
 	if ( $( '#bp-nouveau-activity-form' ).length ) {
 		parentContainer = $( '#bp-nouveau-activity-form' );
@@ -140,10 +140,7 @@
 			var links = this.get( '_links' ), self = this, success = options.success;
 			options  = options || {};
 			options.context = this;
-			_.extend( options, this.options );
-
-			// We will not use the regular path.
-			delete options.path;
+			_.extend( options, _.omit( this.options, ['path', 'data'] ) );
 
 			if ( ! links.favorite || links.favorite.length < 1 ) {
 				return false;
@@ -313,7 +310,7 @@
 				if ( collection.models && collection.models.length === 1 ) {
 					var parent    = _.first( collection.models ),
 					    parent_id = parent.get( 'id' );
-					
+
 					_.extend( this.options.postData, {
 						type: 'activity_comment',
 						'primary_item_id' : parent_id,
@@ -627,7 +624,7 @@
 					}
 				} );
 			}
-			
+
 		},
 
 		cleanView: function() {
@@ -636,7 +633,7 @@
 
 		backToAllActivites: function( event ) {
 			event.preventDefault();
-			
+
 			this.model.collection.reset( null );
 			this.options.children.reset( null, { parent: null } );
 		},
