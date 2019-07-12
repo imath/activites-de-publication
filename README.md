@@ -7,8 +7,8 @@ Cette extension BuddyPress vous propose d'ajouter un nouvel espace de conversati
 
 ### Configuration requise :
 
-- WordPress 4.9.8,
-- BuddyPress 3.1.0,
+- WordPress 5.0.0,
+- BuddyPress 5.0.0,
 - le composant des activités de BuddyPress doit être actif,
 - la Rest API de WordPress doit être disponible (elle l'est par défaut).
 
@@ -23,8 +23,8 @@ This BuddyPress plugin brings to your posts a new conversation space to compleme
 
 ### Required configuration:
 
-- WordPress 4.9.8,
-- BuddyPress 3.1.0,
+- WordPress 5.0.0,
+- BuddyPress 5.0.0,
 - the Activity BuddyPress component must be active,
 - the WordPress Rest API must be available (which is the case by default).
 
