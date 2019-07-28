@@ -2,10 +2,10 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Activités de Publication 2.0.0-beta\n"
+"Project-Id-Version: Activités de Publication 2.0.0-beta-2\n"
 "Report-Msgid-Bugs-To: "
 "https://github.com/imath/activites-de-publication/issues\n"
-"POT-Creation-Date: 2019-07-11 15:43:29+00:00\n"
+"POT-Creation-Date: 2019-07-28 07:26:48+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -45,114 +45,114 @@ msgstr ""
 msgid "Confirmez votre demande."
 msgstr ""
 
-#: inc/functions.php:136
+#: inc/functions.php:130
 msgid "Activer ou non les activités de publication"
 msgstr ""
 
-#: inc/functions.php:169
+#: inc/functions.php:163
 msgid "%s a partagé une activité de publication."
 msgstr ""
 
-#: inc/functions.php:181
+#: inc/functions.php:175
 msgid "Nouvelle activité de publication"
 msgstr ""
 
-#: inc/functions.php:183
+#: inc/functions.php:177
 msgid "Activités de publication"
 msgstr ""
 
-#: inc/functions.php:321
+#: inc/functions.php:315
 msgid "%1$s à %2$s"
 msgstr ""
 
-#: inc/functions.php:504
+#: inc/functions.php:498
 #. translators: %s: login URL
 msgid ""
 "Vous devez <a href=\"%s\">être connecté·e</a> pour publier ou répondre à "
 "des conversations."
 msgstr ""
 
-#: inc/functions.php:507
+#: inc/functions.php:501
 msgid "Publier"
 msgstr ""
 
-#: inc/functions.php:508
+#: inc/functions.php:502
 msgid "Participez aux conversations !"
 msgstr ""
 
-#: inc/functions.php:509
+#: inc/functions.php:503
 msgid "Répondez à %s !"
 msgstr ""
 
-#: inc/functions.php:510
+#: inc/functions.php:504
 msgid "Merci de patienter pendant le chargement de la ou des conversations."
 msgstr ""
 
-#: inc/functions.php:511
+#: inc/functions.php:505
 msgid "Merci de patienter pendant le chargement de la ou des réponses."
 msgstr ""
 
-#: inc/functions.php:512
+#: inc/functions.php:506
 msgid "Aucune conversation initiée, soyez le premier à en démarrer une !"
 msgstr ""
 
-#: inc/functions.php:513
+#: inc/functions.php:507
 msgid "Aucune réponse pour le moment, soyez le premier à réagir !"
 msgstr ""
 
-#: inc/functions.php:515
+#: inc/functions.php:509
 msgid ""
 "Désolé, vous n’êtes pas autorisé·e à consulter les activités de cette "
 "publication."
 msgstr ""
 
-#: inc/functions.php:516
+#: inc/functions.php:510
 msgid "Désolé, nous ne sommes pas en mesure de créer cette activité de publication."
 msgstr ""
 
-#: inc/functions.php:517
+#: inc/functions.php:511
 msgid ""
 "Désolé, vous n’êtes pas autorisé·e à créer des activités pour cette "
 "publication."
 msgstr ""
 
-#: inc/functions.php:518
+#: inc/functions.php:512
 msgid ""
 "Merci d’ajouter du contenu à votre activité de publication à l’aide du "
 "champ texte multiligne."
 msgstr ""
 
-#: inc/functions.php:543
+#: inc/functions.php:537
 #. translators: %s = member name - already translated for BuddyPress
 msgid "Profile photo of %s"
 msgstr ""
 
-#: inc/functions.php:556
+#: inc/functions.php:550
 #. translators: %s = member first name - already translated for BuddyPress
 msgid "What's new, %s?"
 msgstr ""
 
-#: inc/functions.php:558
+#: inc/functions.php:552
 #. translators: already translated for BuddyPress
 msgid "Post what's new"
 msgstr ""
 
-#: inc/functions.php:560
+#: inc/functions.php:554
 #. translators: already translated for BuddyPress
 msgid "Post in"
 msgstr ""
 
-#: inc/functions.php:562
+#: inc/functions.php:556
 #. translators: already translated for BuddyPress
 msgid "Post Update"
 msgstr ""
 
-#: inc/functions.php:564
+#: inc/functions.php:558
 #. translators: already translated for BuddyPress
 msgid "Cancel"
 msgstr ""
 
-#: inc/functions.php:792
+#: inc/functions.php:786
 #: templates/buddypress/common/js-templates/activity/activites-de-publication.php:37
 msgid "Modifier"
 msgstr ""
