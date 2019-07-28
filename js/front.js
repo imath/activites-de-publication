@@ -401,6 +401,10 @@
 			'click .nav-item a'  : 'toggleNav'
 		},
 
+		initialize: function() {
+			this.on( 'ready', this.setActiveListViews, this );
+		},
+
 		toggleNav: function( event ) {
 			event.preventDefault();
 
@@ -417,6 +421,18 @@
 				$( '#activites-de-publication-list' ).addClass( 'hide' );
 				$( '#activites-de-publication-parent' ).addClass( 'hide' );
 				$( '#comments' ).show();
+			}
+		},
+
+		setActiveListViews: function() {
+			var currentType = this.$el.find( 'li.current a' ).data( 'type' );
+
+			// The site admin might edit the template.
+			if ( 'comments' !== currentType ) {
+				$( '#bp-nouveau-activity-form' ).removeClass( 'hide' );
+				$( '#activites-de-publication-list' ).removeClass( 'hide' );
+				$( '#activites-de-publication-parent' ).removeClass( 'hide' );
+				$( '#comments' ).hide();
 			}
 		}
 	} );
