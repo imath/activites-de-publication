@@ -40,7 +40,7 @@ function post_activities_js_url() {
  * @return string the plugin's BP Templates path.
  */
 function post_activities_bp_templates_dir() {
-	return trailingslashit( post_activities()->tpl_dir) . 'buddypress';
+	return trailingslashit( post_activities()->tpl_dir ) . 'buddypress';
 }
 
 /**
@@ -51,7 +51,7 @@ function post_activities_bp_templates_dir() {
  * @return string the plugin's BP Templates url.
  */
 function post_activities_bp_templates_url() {
-	return trailingslashit( post_activities()->tpl_url) . 'buddypress';
+	return trailingslashit( post_activities()->tpl_url ) . 'buddypress';
 }
 
 /**
@@ -62,20 +62,14 @@ function post_activities_bp_templates_url() {
  * @return string the JS minified suffix.
  */
 function post_activities_min_suffix() {
-	$min = '.min';
-
-	if ( defined( 'SCRIPT_DEBUG' ) && true === SCRIPT_DEBUG )  {
-		$min = '';
-	}
-
 	/**
 	 * Filter here to edit the minified suffix.
 	 *
 	 * @since  1.0.0
 	 *
-	 * @param  string $min The minified suffix.
+	 * @param  string $value The minified suffix.
 	 */
-	return apply_filters( 'post_activities_min_suffix', $min );
+	return apply_filters( 'post_activities_min_suffix', bp_core_get_minified_asset_suffix() );
 }
 
 /**
