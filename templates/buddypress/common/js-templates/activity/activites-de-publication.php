@@ -55,7 +55,7 @@
 						<# print( commentString.replace( '%s', data.comment_count ) ); #>
 					<# } #>
 				</a>
-			<# } else { #>
+			<# } else if ( 'activity_comment' !== data.type ) { #>
 				<?php if ( is_user_logged_in() ) :?>
 					<a rel="nofollow" class="comment-reply-link activite-de-publication-action" href="#reply/{{data.id}}" data-parent-id="{{data.id}}" data-action="reply"><?php esc_html_e( 'Répondre', 'activites-de-publication' ); ?></a>
 				<?php endif ; ?>
