@@ -8,6 +8,7 @@ _Requires WordPress 5.0 & BuddyPress 5.0_
 
 + It's now possible to add 1 level of comments to posted activities.
 + It's now possible to add a posted activity to activity favorites.
++ Allow Administrators to set "Activité de publication" active by default for all new items of a one or more supported post types.
 
 ## 1.0.2
 
