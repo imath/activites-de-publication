@@ -20,8 +20,7 @@
 			label: _activitesDePublicationAdminSettings.activateLabel,
 			onChange: function( checked ) {
 				props.onChangeActivityToggle( checked );
-			},
-			id: 'toggle-activity'
+			}
 		} );
 	};
 
