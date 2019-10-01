@@ -23,7 +23,7 @@
 			},
 			id: 'toggle-activity'
 		} );
-	}
+	};
 
 	var PostActivityToggle = compose( [
 		postData.withSelect( function( select ) {
