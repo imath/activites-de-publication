@@ -10,20 +10,19 @@
 	}
 
 	var el = wp.element.createElement, compose = wp.element.compose || wp.compose.compose, Fragment = wp.element.Fragment,
-	    PanelBody = wp.components.PanelBody, PanelRow = wp.components.PanelRow, FormToggle = wp.components.FormToggle,
+	    PanelBody = wp.components.PanelBody, PanelRow = wp.components.PanelRow, CheckboxControl = wp.components.CheckboxControl,
 	    PluginSidebar = wp.editPost.PluginSidebar, PluginSidebarMoreMenuItem = wp.editPost.PluginSidebarMoreMenuItem,
 	    registerPlugin = wp.plugins.registerPlugin, postData = wp.data;
 
-	function activityToggle( props ) {
-		return el( FormToggle, {
-			key: 'toggle',
+	var activityToggle = function( props ) {
+		return el( CheckboxControl, {
 			checked: props.checked,
-			onChange: function() {
-				props.onChangeActivityToggle();
-			},
-			id: 'toggle-activity'
+			label: _activitesDePublicationAdminSettings.activateLabel,
+			onChange: function( checked ) {
+				props.onChangeActivityToggle( checked );
+			}
 		} );
-	}
+	};
 
 	var PostActivityToggle = compose( [
 		postData.withSelect( function( select ) {
@@ -33,16 +32,11 @@
 		} ),
 		postData.withDispatch( function( dispatch ) {
 			return {
-				onChangeActivityToggle: function() {
-					var metas = postData.select( 'core/editor' ).getEditedPostAttribute( 'meta' );
-
-					if ( ! metas.activites_de_publication ) {
-						metas.activites_de_publication = true;
-					} else {
-						metas.activites_de_publication = false;
-					}
-
-					dispatch( 'core/editor' ).editPost( { meta: metas } );
+				onChangeActivityToggle: function( checked ) {
+					dispatch( 'core/editor' ).editPost( {
+						'activites_de_publication': checked,
+						meta: { 'activites_de_publication': checked }
+					} );
 				}
 			};
 		} )
@@ -50,17 +44,6 @@
 
 	function activitesDarticleSidebar() {
 		var metas = postData.select( 'core/editor' ).getEditedPostAttribute( 'meta' );
-
-		var children = [
-			el( 'label', {
-				key: 'label',
-				htmlFor: 'toggle-activity'
-			}, _activitesDePublicationAdminSettings.activateLabel ),
-			el( PostActivityToggle, {
-				key: 'toggle',
-				checked: metas.activites_de_publication ? true : false
-			} )
-		];
 
 		return el(
 			Fragment,
@@ -83,7 +66,10 @@
 					{
 						title: _activitesDePublicationAdminSettings.settingsLabel
 					},
-					el( PanelRow, {}, children )
+					el( PanelRow, {}, el( PostActivityToggle, {
+						key: 'toggle',
+						checked: metas.activites_de_publication ? true : false
+					} ) )
 				)
 			)
 		);

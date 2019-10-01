@@ -1,5 +1,14 @@
 # Change Log
 
+## 2.0.0
+
+_Requires WordPress 5.0 & BuddyPress 5.0_
+
+### Features
+
++ It's now possible to add 1 level of comments to posted activities.
++ It's now possible to add a posted activity to activity favorites.
+
 ## 1.0.2
 
 _Requires WordPress 4.9 & Gutenberg 3.4 or up (if Gutenberg is active)_

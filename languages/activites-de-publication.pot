@@ -2,10 +2,10 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Activités de Publication 1.0.4\n"
+"Project-Id-Version: Activités de Publication 2.0.0-beta-3\n"
 "Report-Msgid-Bugs-To: "
 "https://github.com/imath/activites-de-publication/issues\n"
-"POT-Creation-Date: 2019-05-01 10:10:51+00:00\n"
+"POT-Creation-Date: 2019-10-01 04:22:53+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,9 +14,9 @@ msgstr ""
 "Language-Team: FRENCH <contact@imathi.eu>\n"
 "X-Generator: grunt-wp-i18n 1.0.3\n"
 
-#: activites-de-publication.php:99
+#: activites-de-publication.php:96
 msgid ""
-"Cette extension nécessite à minima WordPress 4.9.8, BuddyPress 3.0 et "
+"Cette extension nécessite à minima WordPress 5.0.0, BuddyPress 5.0.0 et "
 "requiert que le composant des activités soit actif."
 msgstr ""
 
@@ -45,109 +45,114 @@ msgstr ""
 msgid "Confirmez votre demande."
 msgstr ""
 
-#: inc/functions.php:136
+#: inc/functions.php:129
 msgid "Activer ou non les activités de publication"
 msgstr ""
 
-#: inc/functions.php:174
+#: inc/functions.php:180
 msgid "%s a partagé une activité de publication."
 msgstr ""
 
-#: inc/functions.php:186
+#: inc/functions.php:192
 msgid "Nouvelle activité de publication"
 msgstr ""
 
-#: inc/functions.php:188
+#: inc/functions.php:194
 msgid "Activités de publication"
 msgstr ""
 
-#: inc/functions.php:325
+#: inc/functions.php:332
 msgid "%1$s à %2$s"
 msgstr ""
 
-#: inc/functions.php:490
+#: inc/functions.php:515
 #. translators: %s: login URL
 msgid ""
-"Vous devez <a href=\"%s\">être connecté·e</a> pour afficher ou publier des "
-"conversations."
+"Vous devez <a href=\"%s\">être connecté·e</a> pour publier ou répondre à "
+"des conversations."
 msgstr ""
 
-#: inc/functions.php:493
+#: inc/functions.php:518
 msgid "Publier"
 msgstr ""
 
-#: inc/functions.php:494
+#: inc/functions.php:519
 msgid "Participez aux conversations !"
 msgstr ""
 
-#: inc/functions.php:495
-msgid "Merci de patienter pendant le chargement des conversations."
+#: inc/functions.php:520
+msgid "Répondez à %s !"
 msgstr ""
 
-#: inc/functions.php:496
+#: inc/functions.php:521
+msgid "Merci de patienter pendant le chargement de la ou des conversations."
+msgstr ""
+
+#: inc/functions.php:522
+msgid "Merci de patienter pendant le chargement de la ou des réponses."
+msgstr ""
+
+#: inc/functions.php:523
 msgid "Aucune conversation initiée, soyez le premier à en démarrer une !"
 msgstr ""
 
-#: inc/functions.php:498
+#: inc/functions.php:524
+msgid "Aucune réponse pour le moment, soyez le premier à réagir !"
+msgstr ""
+
+#: inc/functions.php:526
 msgid ""
 "Désolé, vous n’êtes pas autorisé·e à consulter les activités de cette "
 "publication."
 msgstr ""
 
-#: inc/functions.php:499
+#: inc/functions.php:527
 msgid "Désolé, nous ne sommes pas en mesure de créer cette activité de publication."
 msgstr ""
 
-#: inc/functions.php:500
+#: inc/functions.php:528
 msgid ""
 "Désolé, vous n’êtes pas autorisé·e à créer des activités pour cette "
 "publication."
 msgstr ""
 
-#: inc/functions.php:501
+#: inc/functions.php:529
 msgid ""
 "Merci d’ajouter du contenu à votre activité de publication à l’aide du "
 "champ texte multiligne."
 msgstr ""
 
-#: inc/functions.php:526
+#: inc/functions.php:554
 #. translators: %s = member name - already translated for BuddyPress
 msgid "Profile photo of %s"
 msgstr ""
 
-#: inc/functions.php:539
+#: inc/functions.php:567
 #. translators: %s = member first name - already translated for BuddyPress
 msgid "What's new, %s?"
 msgstr ""
 
-#: inc/functions.php:541
+#: inc/functions.php:569
 #. translators: already translated for BuddyPress
 msgid "Post what's new"
 msgstr ""
 
-#: inc/functions.php:543
+#: inc/functions.php:571
 #. translators: already translated for BuddyPress
 msgid "Post in"
 msgstr ""
 
-#: inc/functions.php:545
+#: inc/functions.php:573
 #. translators: already translated for BuddyPress
 msgid "Post Update"
 msgstr ""
 
-#: inc/functions.php:547
+#: inc/functions.php:575
 #. translators: already translated for BuddyPress
 msgid "Cancel"
 msgstr ""
 
-#: inc/functions.php:770
-#. translators: already translated for BuddyPress
-msgid "Delete"
-msgstr ""
-
-#: inc/functions.php:775 inc/functions.php:808
-#: templates/buddypress/activity/entry-legacy.php:62
-#: templates/buddypress/activity/entry-nouveau.php:51
+#: inc/functions.php:803
 #: templates/buddypress/common/js-templates/activity/activites-de-publication.php:37
 msgid "Modifier"
 msgstr ""
@@ -156,7 +161,31 @@ msgstr ""
 msgid "Commentaires"
 msgstr ""
 
-#: templates/buddypress/common/js-templates/activity/activites-de-publication.php:49
+#: templates/buddypress/common/js-templates/activity/activites-de-publication.php:52
+msgid "Lire la réponse"
+msgstr ""
+
+#: templates/buddypress/common/js-templates/activity/activites-de-publication.php:54
+msgid "Lire les %s réponses"
+msgstr ""
+
+#: templates/buddypress/common/js-templates/activity/activites-de-publication.php:60
+msgid "Répondre"
+msgstr ""
+
+#: templates/buddypress/common/js-templates/activity/activites-de-publication.php:67
+msgid "Retirer de mes favoris"
+msgstr ""
+
+#: templates/buddypress/common/js-templates/activity/activites-de-publication.php:69
+msgid "Ajouter à mes favoris"
+msgstr ""
+
+#: templates/buddypress/common/js-templates/activity/activites-de-publication.php:78
+msgid "Revenir sur toutes les conversations"
+msgstr ""
+
+#: templates/buddypress/common/js-templates/activity/activites-de-publication.php:84
 msgid "Charger plus de conversations"
 msgstr ""
 
